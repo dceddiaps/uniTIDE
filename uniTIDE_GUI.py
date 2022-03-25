@@ -166,6 +166,93 @@ def help_input_popup():
     
 # Help button of statistics box
 def help_stat_popup():
+        
+    # Layout
+    root = tk.Toplevel()
+    root.title('Help - Statistics Box')
+    root.geometry("400x500")
+    root.lift()
+    root.config(bg='#1c4366')
+    frame = tk.Frame(root, bg='white')
+    frame.place(relwidth=0.96,relheight=0.96,relx=0.02,rely=0.02)
+    l_title = tk.Label(frame,text='Understanding the Statistics Box',
+                        font=('raleway', 18, 'italic bold'),bg='white')
+    l_title.pack(pady=10)
+    
+    # Info labels
+    l_0 = tk.Label(frame,text='All statistics provided are relative to all data inputed.\n',
+                    bg='white',font=('raleway', 10, 'italic'))
+    l_0.pack()    
+
+    l_1 = tk.Label(frame,text='Hmax or HAT (Highest Astronomical Tide):',
+                   bg='white',font=('raleway', 10, 'bold'))
+    l_1.pack(anchor=tk.W)
+
+    l_2 = tk.Label(frame,text='\tMaximum tide height in all data.',
+                   bg='white',font=('raleway', 10))
+    l_2.pack(anchor=tk.W)    
+    
+    l_3 = tk.Label(frame,text='Hmin or LAT (Lowest Astronomical Tide):',
+                   bg='white',font=('raleway', 10, 'bold'))
+    l_3.pack(anchor=tk.W)
+
+    l_4 = tk.Label(frame,text='\tMinimum tide height in all data.',
+                   bg='white',font=('raleway', 10))
+    l_4.pack(anchor=tk.W)    
+
+    l_5 = tk.Label(frame,text='Hmean:',
+                   bg='white',font=('raleway', 10, 'bold'))
+    l_5.pack(anchor=tk.W)
+
+    l_6 = tk.Label(frame,text='\tMean tide height of the data.',
+                   bg='white',font=('raleway', 10))
+    l_6.pack(anchor=tk.W) 
+
+    l_6a = tk.Label(frame,text='\tIt is also know as MLS (Mean Sea Level) of all data.',
+                   bg='white',font=('raleway', 10))
+    l_6a.pack(anchor=tk.W) 
+
+    l_8 = tk.Label(frame,text='Start:',
+                   bg='white',font=('raleway', 10, 'bold'))
+    l_8.pack(anchor=tk.W)
+
+    l_9 = tk.Label(frame,text='\tThe moment in time when tide measurements started.',
+                   bg='white',font=('raleway', 10))
+    l_9.pack(anchor=tk.W) 
+
+    l_9a = tk.Label(frame,text='\tOutputed: detetime vector: yyyy-mm-dd HH:MM:SS.',
+                   bg='white',font=('raleway', 10))
+    l_9a.pack(anchor=tk.W) 
+
+    l_10 = tk.Label(frame,text='End:',
+                   bg='white',font=('raleway', 10, 'bold'))
+    l_10.pack(anchor=tk.W)
+
+    l_11 = tk.Label(frame,text='\tThe moment in time when tide measurements ended.',
+                   bg='white',font=('raleway', 10))
+    l_11.pack(anchor=tk.W) 
+   
+    l_11a = tk.Label(frame,text='\tOutputed: detetime vector: yyyy-mm-dd HH:MM:SS.',
+                   bg='white',font=('raleway', 10))
+    l_11a.pack(anchor=tk.W) 
+     
+    l_12 = tk.Label(frame,text='Interval:',
+                   bg='white',font=('raleway', 10, 'bold'))
+    l_12.pack(anchor=tk.W)
+
+    l_13 = tk.Label(frame,text='\tDifference in time between END and START.',
+                   bg='white',font=('raleway', 10))
+    l_13.pack(anchor=tk.W) 
+
+    l_14 = tk.Label(frame,text='Sample Rate:',
+                   bg='white',font=('raleway', 10, 'bold'))
+    l_14.pack(anchor=tk.W)
+
+    l_15 = tk.Label(frame,text='\tTime interval between tide measurements.',
+                   bg='white',font=('raleway', 10))
+    l_15.pack(anchor=tk.W) 
+    
+    
     return None    
 
 # Help button for plots
@@ -215,11 +302,11 @@ def save_file(b_save,save_status,df,r_res,e_res_other):
         b_save.config(bg=DEFAULT_BG_COLOR)
  
 # Layout of input/browse box.
-def inpux_box(frame):
+def inpux_box(frame,box_name,x,y):
     
-    lframe = ttk.LabelFrame(frame,text='Data Input')
+    lframe = ttk.LabelFrame(frame,text=box_name)
     # lframe = tk.LabelFrame(frame,text='Data Input',font=('raleway', 11,'bold italic'),fg='black')
-    lframe.place(x=5,y=5,height=560,width=267)
+    lframe.place(x=x,y=y,height=560,width=267)
     
     # Frame input parameters
     lframe_format = tk.LabelFrame(lframe,text='Input Parameters',
@@ -470,73 +557,72 @@ def plot_plot(file,
 
     # Plot
     # for i in plt.style.available:
-    for i in ['seaborn','seaborn-white']:
-            
-        plt.style.use(i)
-        # plt.style.available
-        plt.figure(f"{i}",figsize=(12,6))
-        plt.title(file+f' <{i}>')
-        plt.plot(df.date,df.h,label='Tide',color='black')
+    # for i in ['seaborn','seaborn-white']:          
+    plt.style.use('seaborn')
+    # plt.style.available
+    plt.figure("uniTIDE - Plot",figsize=(12,6))
+    plt.title(file,fontweight="bold")
+    plt.plot(df.date,df.h,label='Tide',color='black')
+
+    # Sample rate
+    rate = int(np.round(((df.date.max()-df.date.min())/len(df)).total_seconds()/60)) 
+
+    # Plot custom interval MSL
+    if msl_o.get()==1:
+        ma_o = df.h.rolling(window=int(float(e_msl_o.get())*24*60/rate)).mean().dropna()
+        plt.plot(df.date[:len(ma_o)],ma_o,label=f'MSL - {e_msl_o.get()} days')   
     
-        # Sample rate
-        rate = int(np.round(((df.date.max()-df.date.min())/len(df)).total_seconds()/60)) 
+    # Plot dayly MSL           
+    if msl_d.get()==1:
+        ma_d = df.h.rolling(window=int(1*24*60/rate)).mean().dropna()
+        plt.plot(df.date[:len(ma_d)],ma_d,label='MSL - day')
 
-        # Plot custom interval MSL
-        if msl_o.get()==1:
-            ma_o = df.h.rolling(window=int(float(e_msl_o.get())*24*60/rate)).mean().dropna()
-            plt.plot(df.date[:len(ma_o)],ma_o,label=f'MSL - {e_msl_o.get()} days')   
+    # Plot monthly MSL
+    if msl_m.get()==1:
+        ma_m = df.h.rolling(window=int(30*24*60/rate)).mean().dropna()
+        plt.plot(df.date[:len(ma_m)],ma_m,label='MSL - month')     
         
-        # Plot dayly MSL           
-        if msl_d.get()==1:
-            ma_d = df.h.rolling(window=int(1*24*60/rate)).mean().dropna()
-            plt.plot(df.date[:len(ma_d)],ma_d,label='MSL - day')
+    # Plot yearly MSL
+    if msl_y.get()==1:
+        ma_y = df.h.rolling(window=int(365*24*60/rate)).mean().dropna()
+        plt.plot(df.date[:len(ma_y)],ma_y,label='MSL - year')  
 
-        # Plot monthly MSL
-        if msl_m.get()==1:
-            ma_m = df.h.rolling(window=int(30*24*60/rate)).mean().dropna()
-            plt.plot(df.date[:len(ma_m)],ma_m,label='MSL - month')     
-            
-        # Plot yearly MSL
-        if msl_y.get()==1:
-            ma_y = df.h.rolling(window=int(365*24*60/rate)).mean().dropna()
-            plt.plot(df.date[:len(ma_y)],ma_y,label='MSL - year')  
-
-        # MSL - all data
-        if msl_all.get()==1:
-            plt.axhline(y=df.h.mean(),color='orange',
-                        label=f'MSL - all data - {np.round(df.h.mean(),3)} {units}')
+    # MSL - all data
+    if msl_all.get()==1:
+        plt.axhline(y=df.h.mean(),color='orange',
+                    label=f'MSL - all data - {np.round(df.h.mean(),3)} {units}')
+    
+    
+    # Adjusting X-axis depending on units.
+    if r_xunits.get() == 1:
+        plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%j'))
+        date_unit = 'Julian Days'
+        plt.xlabel(date_unit + f' (year(s) = {np.unique(df.date.dt.year)})',fontweight="bold")
+    if r_xunits.get() == 2:
+        plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d\n%H:%M'))
+        date_unit = 'Datetime'
+        plt.xlabel(date_unit,fontweight="bold")
         
-        
-        # Adjusting X-axis depending on units.
-        if r_xunits.get() == 1:
-            plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%j'))
-            date_unit = 'Julian Days'
-            plt.xlabel(date_unit + f' (year(s) = {np.unique(df.date.dt.year)})')
-        if r_xunits.get() == 2:
-            plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d\n%H:%M'))
-            date_unit = 'Datetime'
-            plt.xlabel(date_unit)
-            
-        if bw==True:
-            plt.plot(filtered_bw.date,filtered_bw[0],label='BW Filtered')
-        
-        plt.ylabel(f'Tide height ({units})')
-        plt.legend(facecolor='white',framealpha=0.6,frameon=True,borderpad=1, edgecolor="black")
-        plt.tight_layout()
-        plt.grid('black')
-        plt.show()
-        
-        # # Plotting KDE's
-        # if msl_d.get()==1:
-        #     plt.figure()
-        #     plt.title(file + f' {i}')
-        #     plt.xlabel(f'Mean Sea Level ({units})')
-        #     if msl_m.get()==1:
-        #         ma_m.plot.kde(color='orange',label='Monthly MSL')            
-        #     ma_d.plot.kde(color='black',label='Dayly MSL')
-        #     plt.legend()
-        #     plt.grid('black')
-        #     plt.show()
+    if bw==True:
+        plt.plot(filtered_bw.date,filtered_bw[0],label='BW Filtered')
+    
+    plt.ylabel(f'Tide height ({units})',fontweight="bold")
+    plt.legend(facecolor='white',framealpha=0.6,frameon=True,borderpad=1, edgecolor="black")
+    plt.tight_layout()
+    plt.grid('black')
+    plt.show()
+    
+    # # Plotting KDE's
+    # if msl_d.get()==1:
+    #     plt.figure()
+    #     plt.title(file + f' {i}')
+    #     plt.xlabel(f'Mean Sea Level ({units})')
+    #     if msl_m.get()==1:
+    #         ma_m.plot.kde(color='orange',label='Monthly MSL')            
+    #     ma_d.plot.kde(color='black',label='Dayly MSL')
+    #     plt.legend()
+    #     plt.grid('black')
+    #     plt.show()
      
     return
 
@@ -657,6 +743,7 @@ def upload_file_plot(label_sumario,
         r_o['state']='normal'
         e_o['state']='normal'
         
+        # Enabling MSL buttons only when its possible to compute.
         if ((df.date.max()-df.date.min())>=dt.timedelta(days=364,hours=23,minutes=58)):
             cb_msl_y['state']='normal'
         if ((df.date.max()-df.date.min())>=dt.timedelta(days=30)):
@@ -715,7 +802,6 @@ def upload_file_plot(label_sumario,
 
 #_____________________________________________________________________________#
 #______________________________COMPARE TIDES DEFS_____________________________#
-
 
 
 
@@ -1161,20 +1247,20 @@ def run_bw(df,
             r_f['state'] = 'normal'
             r_o['state'] = 'normal'
             e_o['state'] = 'normal'
-            cb_msl_y['state'] = 'normal'
-            cb_msl_m['state'] = 'normal'
-            cb_msl_d['state'] = 'normal'
             cb_msl_o['state'] = 'normal'
             cb_msl_all['state'] = 'normal'
             r_res_none['state'] = 'normal'
             r_res_1m['state'] = 'normal'
             r_res_5m['state'] = 'normal'
             r_res_other['state'] = 'normal'
-            e_res_other['state'] = 'normal'
-            # r_res.set('1')
-            # r_xunits.set('1')
-            # r_yunits.set('1')
-            # msl_all.set('1')
+            e_res_other['state'] = 'normal'   
+            # Enabling MSL buttons only when its possible to compute.
+            if ((df.date.max()-df.date.min())>=dt.timedelta(days=364,hours=23,minutes=58)):
+                cb_msl_y['state']='normal'
+            if ((df.date.max()-df.date.min())>=dt.timedelta(days=30)):
+                cb_msl_m['state']='normal'
+            if ((df.date.max()-df.date.min())>=dt.timedelta(days=1)):
+                cb_msl_d['state']='normal'
     
         except: 
             b_run_bw.config(bg=DEFAULT_BG_COLOR)
@@ -1354,9 +1440,17 @@ def upload_file_residuals(label_sumario,
                      l_stat_enddate_val,
                      l_stat_dateinterv_val,
                      l_stat_sf_val,
+                     obs=False,
+                     pre=False
                      ):
 
-    global df,file
+    # Doing global 
+    if (obs==True) & (pre==False):
+        global df_obs
+    if (obs==False) & (pre==True):
+        global df_pre
+    
+    global file
     
     # Open dialog and display path in label
     file = filedialog.askopenfilename(filetypes=[('All',"*.*")])
@@ -1457,6 +1551,13 @@ def upload_file_residuals(label_sumario,
 ----------------------------------------------------------
 
 {df}''')    
+
+
+    # Separating observed and predicted df's.
+    if (obs==True) & (pre==False):
+        df_obs = df
+    if (obs==False) & (pre==True):
+        df_pre = df
 
     return None
 
@@ -1711,7 +1812,10 @@ def plot_frame():
     frame = base_layer(DEFAULT_BG_COLOR,title,master)
     
     # Layout imput/browse 
-    lframe,e_skip_hrows,e_skip_frows,e_date_col,e_h_col,lframe_delimiter,r,e_other,upload_status,l_stat_hmax_val,l_stat_hmin_val,l_stat_hmean_val,l_stat_startdate_val,l_stat_enddate_val,l_stat_dateinterv_val,l_stat_sf_val,_sum = inpux_box(frame)
+    x = 5
+    y = 5
+    box_name = 'Data Input'
+    lframe,e_skip_hrows,e_skip_frows,e_date_col,e_h_col,lframe_delimiter,r,e_other,upload_status,l_stat_hmax_val,l_stat_hmin_val,l_stat_hmean_val,l_stat_startdate_val,l_stat_enddate_val,l_stat_dateinterv_val,l_stat_sf_val,_sum = inpux_box(frame,box_name,x,y,)
 
     # Layout plot
     x=290
@@ -1805,8 +1909,11 @@ def qc_frame():
     title = 'Quality Control'
     frame = base_layer(DEFAULT_BG_COLOR,title,master)
     
-##### Input frame #############################################################
-    lframe,e_skip_hrows,e_skip_frows,e_date_col,e_h_col,lframe_delimiter,r,e_other,upload_status,l_stat_hmax_val,l_stat_hmin_val,l_stat_hmean_val,l_stat_startdate_val,l_stat_enddate_val,l_stat_dateinterv_val,l_stat_sf_val,_sum = inpux_box(frame)
+    # Layout input/browse file
+    x = 5
+    y = 5
+    box_name = 'Data Input'
+    lframe,e_skip_hrows,e_skip_frows,e_date_col,e_h_col,lframe_delimiter,r,e_other,upload_status,l_stat_hmax_val,l_stat_hmin_val,l_stat_hmean_val,l_stat_startdate_val,l_stat_enddate_val,l_stat_dateinterv_val,l_stat_sf_val,_sum = inpux_box(frame,box_name,x,y)
 
     # Botão upload
     b_upload_qc = tk.Button(lframe, text='Browse file', font=('raleway', 10,'bold'),
@@ -1849,7 +1956,10 @@ def bw_frame():
     frame = base_layer(DEFAULT_BG_COLOR,title,master)
 
     # Layout upload/browse file
-    lframe,e_skip_hrows,e_skip_frows,e_date_col,e_h_col,lframe_delimiter,r,e_other,upload_status,l_stat_hmax_val,l_stat_hmin_val,l_stat_hmean_val,l_stat_startdate_val,l_stat_enddate_val,l_stat_dateinterv_val,l_stat_sf_val,_sum = inpux_box(frame)
+    x = 5
+    y = 5
+    box_name = 'Data Input'
+    lframe,e_skip_hrows,e_skip_frows,e_date_col,e_h_col,lframe_delimiter,r,e_other,upload_status,l_stat_hmax_val,l_stat_hmin_val,l_stat_hmean_val,l_stat_startdate_val,l_stat_enddate_val,l_stat_dateinterv_val,l_stat_sf_val,_sum = inpux_box(frame,box_name,x,y)
 
     # Layout plot
     x=290
@@ -1942,7 +2052,7 @@ def bw_frame():
 ##### Buttlerworth filter!#####################################################
     
     frame_bw = ttk.LabelFrame(frame,text='Filtering Parameters')
-    frame_bw.place(x=290,y=6,height=135,width=267)
+    frame_bw.place(x=290,y=5,height=135,width=267)
     
     # LABEL/ENTRY FS
     l_fs = tk.Label(frame_bw,text='Sampling Frequency: ')
@@ -2027,7 +2137,10 @@ def resample_frame():
     frame = base_layer(DEFAULT_BG_COLOR,title,master)
     
     # Layout input/browse  
-    lframe,e_skip_hrows,e_skip_frows,e_date_col,e_h_col,lframe_delimiter,r,e_other,upload_status,l_stat_hmax_val,l_stat_hmin_val,l_stat_hmean_val,l_stat_startdate_val,l_stat_enddate_val,l_stat_dateinterv_val,l_stat_sf_val,_sum = inpux_box(frame)
+    x = 5
+    y = 5
+    box_name = 'Data Input'
+    lframe,e_skip_hrows,e_skip_frows,e_date_col,e_h_col,lframe_delimiter,r,e_other,upload_status,l_stat_hmax_val,l_stat_hmin_val,l_stat_hmean_val,l_stat_startdate_val,l_stat_enddate_val,l_stat_dateinterv_val,l_stat_sf_val,_sum = inpux_box(frame,box_name,x,y)
 
     # Layout save
     x=290
@@ -2075,6 +2188,7 @@ def resample_frame():
     b_save['state'] = tk.DISABLED
 
 
+
 def residuals_frame():
 
     global df
@@ -2090,11 +2204,20 @@ def residuals_frame():
     title = 'Residuals'
     frame = base_layer(DEFAULT_BG_COLOR,title,master)
 
-##### Input frame #############################################################
-    lframe,e_skip_hrows,e_skip_frows,e_date_col,e_h_col,lframe_delimiter,r,e_other,upload_status,l_stat_hmax_val,l_stat_hmin_val,l_stat_hmean_val,l_stat_startdate_val,l_stat_enddate_val,l_stat_dateinterv_val,l_stat_sf_val,_sum = inpux_box(frame)
+    # Layout input/browse OBSERVED
+    x = 5
+    y = 5
+    box_name = 'Data Input (OBSERVED)'
+    lframe,e_skip_hrows,e_skip_frows,e_date_col,e_h_col,lframe_delimiter,r,e_other,upload_status,l_stat_hmax_val,l_stat_hmin_val,l_stat_hmean_val,l_stat_startdate_val,l_stat_enddate_val,l_stat_dateinterv_val,l_stat_sf_val,_sum = inpux_box(frame,box_name,x,y)
 
-    # Botão upload
-    b_upload_residuals = tk.Button(lframe, text='Browse file', font=('raleway', 10,'bold'),
+    # Layout input/browse PREVISTA
+    x = 290
+    y = 5
+    box_name = 'Data Input (PREDICTED)'
+    lframe2,e_skip_hrows2,e_skip_frows2,e_date_col2,e_h_col2,lframe_delimiter2,r2,e_other2,upload_status2,l_stat_hmax_val2,l_stat_hmin_val2,l_stat_hmean_val2,l_stat_startdate_val2,l_stat_enddate_val2,l_stat_dateinterv_val2,l_stat_sf_val2,_sum2 = inpux_box(frame,box_name,x,y)
+
+    # Botão upload OBSERVADA
+    b_upload_residuals_OBS = tk.Button(lframe, text='Browse file', font=('raleway', 10,'bold'),
                           fg = 'black',width=6,padx=73,pady=4,borderwidth=4,
                           command = lambda:upload_file_residuals(label_sumario=_sum,
                                                       upload_status=upload_status,
@@ -2104,17 +2227,48 @@ def residuals_frame():
                                                       skipf=e_skip_frows,
                                                       sep=int(r.get()),
                                                       other_sep=e_other,
-                                                      b_upload_residuals=b_upload_residuals,
+                                                      b_upload_residuals=b_upload_residuals_OBS,
                                                       l_stat_hmax_val=l_stat_hmax_val,
                                                       l_stat_hmin_val=l_stat_hmin_val,
                                                       l_stat_hmean_val=l_stat_hmean_val,
                                                       l_stat_startdate_val=l_stat_startdate_val,
                                                       l_stat_enddate_val=l_stat_enddate_val,
                                                       l_stat_dateinterv_val=l_stat_dateinterv_val,
-                                                      l_stat_sf_val=l_stat_sf_val
+                                                      l_stat_sf_val=l_stat_sf_val,
+                                                      obs = True,
+                                                      pre = False
                                                       ))
-    b_upload_residuals.configure(anchor="center")
-    b_upload_residuals.place(relx=.5, y=145,anchor='center')
+    b_upload_residuals_OBS.configure(anchor="center")
+    b_upload_residuals_OBS.place(relx=.5, y=145,anchor='center')
+
+    # Botão upload PREDICTED
+    b_upload_residuals_PRE = tk.Button(lframe2, text='Browse file', font=('raleway', 10,'bold'),
+                          fg = 'black',width=6,padx=73,pady=4,borderwidth=4,
+                          command = lambda:upload_file_residuals(label_sumario=_sum2,
+                                                      upload_status=upload_status2,
+                                                      date_col=e_date_col2,
+                                                      h_col=e_h_col2,
+                                                      skipr=e_skip_hrows2,
+                                                      skipf=e_skip_frows2,
+                                                      sep=int(r2.get()),
+                                                      other_sep=e_other2,
+                                                      b_upload_residuals=b_upload_residuals_PRE,
+                                                      l_stat_hmax_val=l_stat_hmax_val2,
+                                                      l_stat_hmin_val=l_stat_hmin_val2,
+                                                      l_stat_hmean_val=l_stat_hmean_val2,
+                                                      l_stat_startdate_val=l_stat_startdate_val2,
+                                                      l_stat_enddate_val=l_stat_enddate_val2,
+                                                      l_stat_dateinterv_val=l_stat_dateinterv_val2,
+                                                      l_stat_sf_val=l_stat_sf_val2,
+                                                      obs = False,
+                                                      pre = True
+                                                      ))
+    b_upload_residuals_PRE.configure(anchor="center")
+    b_upload_residuals_PRE.place(relx=.5, y=145,anchor='center')
+
+    # Residuals frame
+    frame_res = ttk.LabelFrame(frame, text='Compute Residuals')
+    frame_res.place(x=575,y=5,width=267,height=100)
 
 
 
@@ -2134,7 +2288,10 @@ def fft_frame():
     frame = base_layer(DEFAULT_BG_COLOR,title,master)
 
     # Layout input/browse  
-    lframe,e_skip_hrows,e_skip_frows,e_date_col,e_h_col,lframe_delimiter,r,e_other,upload_status,l_stat_hmax_val,l_stat_hmin_val,l_stat_hmean_val,l_stat_startdate_val,l_stat_enddate_val,l_stat_dateinterv_val,l_stat_sf_val,_sum = inpux_box(frame)
+    x = 5
+    y = 5
+    box_name = 'Data Input'
+    lframe,e_skip_hrows,e_skip_frows,e_date_col,e_h_col,lframe_delimiter,r,e_other,upload_status,l_stat_hmax_val,l_stat_hmin_val,l_stat_hmean_val,l_stat_startdate_val,l_stat_enddate_val,l_stat_dateinterv_val,l_stat_sf_val,_sum = inpux_box(frame,box_name,x,y)
 
     # Botão upload
     b_upload_fft = tk.Button(lframe, text='Browse file', font=('raleway', 10,'bold'),
@@ -2285,7 +2442,7 @@ def openwf_frame():
 # Creating main window (root)
 master = tk.Tk()
 master.title('uniTIDE')
-master.geometry("800x630")
+master.geometry("863x630")
 # master.maxsize(800,800)
 master.configure(bg='#1c4366')
 
