@@ -69,7 +69,7 @@ def the_welcome(root):
     l_title.place(relx=.5, rely=.5,anchor='center')
     l_subtitle = tk.Label(frame,text='Designed for field and office needs.',
                           bg='#1c4366',fg='white',font=('raleway','9','italic'))
-    l_subtitle.place(relx=.58, rely=.57,anchor='center')
+    l_subtitle.place(relx=.57, rely=.57,anchor='center')
     
     l_author = tk.Label(frame,text='@author: Diogo Silva <dceddiaps@protonmail.com>',
                         bg='#1c4366',fg='white')
@@ -1772,9 +1772,6 @@ def export_fft(df_fft,b_export_fft,save_status):
     except AttributeError:
         print("The user cancelled save")
         b_export_fft.config(bg=DEFAULT_BG_COLOR)
-
-
-
 
 
 '''_________________________________________________________________________'''
