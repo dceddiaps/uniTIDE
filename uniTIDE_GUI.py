@@ -19,7 +19,6 @@ import datetime as dt
 
 DEFAULT_BG_COLOR='#f1f0f1'
 
-
 #_____________________________________________________________________________#
 #_________________________________GLOBAL DEFS_________________________________#
 
@@ -68,6 +67,10 @@ def the_welcome(root):
     l_title = tk.Label(frame,text='uniTIDE',bg='#1c4366',fg='white',
                         font=('raleway',60,'italic bold'))                   
     l_title.place(relx=.5, rely=.5,anchor='center')
+    l_subtitle = tk.Label(frame,text='Designed for field and office needs.',
+                          bg='#1c4366',fg='white',font=('raleway','9','italic'))
+    l_subtitle.place(relx=.58, rely=.57,anchor='center')
+    
     l_author = tk.Label(frame,text='@author: Diogo Silva <dceddiaps@protonmail.com>',
                         bg='#1c4366',fg='white')
     l_author.place(relx=.5, rely=.9,anchor='s')
@@ -173,13 +176,38 @@ def help_plot_popup():
 def help_save_popup():
     return None
 
+# Help button FFT
+def help_fft_popup():
+    return None
+
 # Just save
-def save_file(b_save,save_status,df):
+def save_file(b_save,save_status,df,r_res,e_res_other):
+    
+    print(len(e_res_other.get()))
+    
     try:
-    # with block automatically closes file
+        
+        # Resample
+        if r_res.get() == 1:       
+            df_for_saving = df
+        elif r_res.get() == 2:       
+            df_for_saving = df.set_index('date').resample('1T').ffill().reset_index().dropna()
+        elif r_res.get() == 3:
+            df_for_saving = df.set_index('date').resample('5T').ffill().reset_index().dropna()
+        elif (r_res.get() == 4) & (len(e_res_other.get())>=1):
+            df_for_saving = df.set_index('date').resample(e_res_other.get()+'T').ffill().reset_index().dropna()
+        elif len(e_res_other.get())==0:
+            tk.messagebox.showinfo('WARNING','You need to define the sample interval!')
+
+        
+        # Saving
+        
+        # Exiting try in a rude way xD
+        print(df_for_saving)
+        
         with filedialog.asksaveasfile(mode='w', filetypes = [('Text Document', '*.txt')],
                                       defaultextension=[".txt"]) as file:
-            df.to_csv(file.name, header=None, index=None, sep=',', mode='a')
+            df_for_saving.to_csv(file.name, header=None, index=None, sep=',', mode='a')
             b_save.config(bg='Light green')
         save_status.config(text=f"File is saved in:\n{file.name}")
     except AttributeError:
@@ -248,7 +276,7 @@ def inpux_box(frame):
     
     # Help input button
     b_help_input = tk.Button(lframe,text='?',font=('Rayleway','16','bold'),
-                             fg='white',bg='#1c4366',command = help_input_popup)
+                             fg='red',bg=DEFAULT_BG_COLOR,command = help_input_popup)
     b_help_input.place(x=239,y=-7,width=20,height=20)
 
     # Status do upload
@@ -386,7 +414,6 @@ def save_box(frame,x,y):
     frame_resamp.place(x=3,y=5,width=257,height=43)
 
     # Resample options
-    # None
     r_res = tk.IntVar()
     r_res.set('1')
     # None
@@ -450,22 +477,26 @@ def plot_plot(file,
         plt.figure(f"{i}",figsize=(12,6))
         plt.title(file+f' <{i}>')
         plt.plot(df.date,df.h,label='Tide',color='black')
+    
+        # Sample rate
+        rate = int(np.round(((df.date.max()-df.date.min())/len(df)).total_seconds()/60)) 
+
+        # Plot custom interval MSL
+        if msl_o.get()==1:
+            ma_o = df.h.rolling(window=int(float(e_msl_o.get())*24*60/rate)).mean().dropna()
+            plt.plot(df.date[:len(ma_o)],ma_o,label=f'MSL - {e_msl_o.get()} days')   
         
-                # if msl_y.get()==1:
-        #     rate = int(np.round(((df.date.max()-df.date.min())/len(df)).total_seconds()/60))
-        #     ma = df.h.rolling(window=int(365*24*60/rate)).mean()
-        #     ma.plot()
-        
-        
-        rate = int(np.round(((df.date.max()-df.date.min())/len(df)).total_seconds()/60))            
+        # Plot dayly MSL           
         if msl_d.get()==1:
             ma_d = df.h.rolling(window=int(1*24*60/rate)).mean().dropna()
             plt.plot(df.date[:len(ma_d)],ma_d,label='MSL - day')
 
+        # Plot monthly MSL
         if msl_m.get()==1:
             ma_m = df.h.rolling(window=int(30*24*60/rate)).mean().dropna()
-            plt.plot(df.date[:len(ma_m)],ma_m,label='MSL - month')            
-
+            plt.plot(df.date[:len(ma_m)],ma_m,label='MSL - month')     
+            
+        # Plot yearly MSL
         if msl_y.get()==1:
             ma_y = df.h.rolling(window=int(365*24*60/rate)).mean().dropna()
             plt.plot(df.date[:len(ma_y)],ma_y,label='MSL - year')  
@@ -650,8 +681,7 @@ def upload_file_plot(label_sumario,
         l_stat_startdate_val['text']=df.date.max()
         l_stat_enddate_val['text']=df.date.min()
         l_stat_dateinterv_val['text']=df.date.max()-df.date.min()
-        l_stat_sf_val['text']=f'{np.round(((df.date.max()-df.date.min())/len(df)).total_seconds()/60,3)} minute(s)'
-
+        l_stat_sf_val['text']=f'{np.round(((df.date.max()-df.date.min())/len(df)).total_seconds()/60,1)} minute(s)'
 
     except:
                
@@ -681,10 +711,6 @@ def upload_file_plot(label_sumario,
 {df}''')    
 
     return None
-
-
-
-
 
 
 #_____________________________________________________________________________#
@@ -789,8 +815,7 @@ def upload_file_qc(label_sumario,
         l_stat_startdate_val['text']=df.date.max()
         l_stat_enddate_val['text']=df.date.min()
         l_stat_dateinterv_val['text']=df.date.max()-df.date.min()
-        l_stat_sf_val['text']=f'{np.round(((df.date.max()-df.date.min())/len(df)).total_seconds()/60,3)} minute(s)'
-
+        l_stat_sf_val['text']=f'{np.round(((df.date.max()-df.date.min())/len(df)).total_seconds()/60,1)} minute(s)'
 
     except:
                
@@ -844,7 +869,6 @@ def upload_file_bw(e_fs,
                    b_save,
                    e_cutoff,
                    e_order,
-                   # cb_btype, 
                    save_status,
                    l_stat_hmax_val,
                    l_stat_hmin_val,
@@ -870,10 +894,6 @@ def upload_file_bw(e_fs,
                    r_res_5m,
                    r_res_other,
                    e_res_other,
-                   r_res,
-                   r_xunits,
-                   r_yunits,
-                   msl_all
                    ):
     
     """
@@ -902,6 +922,15 @@ def upload_file_bw(e_fs,
     # Open dialog and display path in label
     file = filedialog.askopenfilename(filetypes=[('All',"*.*")])
     upload_status.config(text=file)
+
+    # Unfill statistics 
+    l_stat_hmax_val['text']= ' '
+    l_stat_hmin_val['text']=' '
+    l_stat_hmean_val['text']=' '
+    l_stat_startdate_val['text']=' '
+    l_stat_enddate_val['text']=' '
+    l_stat_dateinterv_val['text']=' '
+    l_stat_sf_val['text']=' '
     
     # Reseting bw filter buttons, entries and labels.
     b_run_bw['state'] = 'disabled'
@@ -934,15 +963,6 @@ def upload_file_bw(e_fs,
     r_res_other['state'] = 'disabled'
     e_res_other['state'] = 'disabled'
 
-    # Unfill statistics 
-    l_stat_hmax_val['text']= ' '
-    l_stat_hmin_val['text']=' '
-    l_stat_hmean_val['text']=' '
-    l_stat_startdate_val['text']=' '
-    l_stat_enddate_val['text']=' '
-    l_stat_dateinterv_val['text']=' '
-    l_stat_sf_val['text']=' '
-    
     # Delete any data preview information
     label_sumario.delete('0.0',tk.END)
     
@@ -987,13 +1007,12 @@ def upload_file_bw(e_fs,
         e_fs['state'] = 'normal'
         e_cutoff['state'] = 'normal'
         e_order['state'] = 'normal'
-        # cb_btype['state'] = 'normal'
         
         # Upload successful!
         b_upload_bw.config(bg="Light green")
         
         # Fill sample frequency entry of bw filter
-        e_fs.insert(0,np.round(((df.date.max()-df.date.min())/len(df)).total_seconds(),1))
+        e_fs.insert(0,np.round(((df.date.max()-df.date.min())/len(df)).total_seconds(),3))
         # Fill cut-off frequency suggestion
         e_cutoff.insert(0,np.round(((df.date.max()-df.date.min())/len(df)).total_seconds()/60))
         # Fill filter order suggestion
@@ -1013,7 +1032,7 @@ def upload_file_bw(e_fs,
         l_stat_startdate_val['text']=df.date.max()
         l_stat_enddate_val['text']=df.date.min()
         l_stat_dateinterv_val['text']=df.date.max()-df.date.min()
-        l_stat_sf_val['text']=f'{np.round(((df.date.max()-df.date.min())/len(df)).total_seconds()/60,3)} minute(s)'
+        l_stat_sf_val['text']=f'{np.round(((df.date.max()-df.date.min())/len(df)).total_seconds()/60,1)} minute(s)'
 
 
     except:
@@ -1055,7 +1074,6 @@ def upload_file_bw(e_fs,
         e_cutoff['state'] = 'disabled'
         e_order.delete(0,tk.END)
         e_order['state'] = 'disabled'
-        # cb_btype['state'] = 'disabled'
 
 
 def run_bw(df,
@@ -1186,6 +1204,12 @@ def upload_file_resample(label_sumario,
                      l_stat_enddate_val,
                      l_stat_dateinterv_val,
                      l_stat_sf_val,
+                     r_res_none,
+                     r_res_1m,
+                     r_res_5m,
+                     r_res_other,
+                     e_res_other,
+                     b_save
                      ):
 
     global df,file
@@ -1202,6 +1226,14 @@ def upload_file_resample(label_sumario,
     l_stat_enddate_val['text']=' '
     l_stat_dateinterv_val['text']=' '
     l_stat_sf_val['text']=' '
+
+    # Reseting buttons
+    r_res_none['state'] = 'disabled'
+    r_res_1m['state'] = 'disabled'
+    r_res_5m['state'] = 'disabled'
+    r_res_other['state'] = 'disabled'
+    e_res_other['state'] = 'disabled'
+    b_save['state'] = 'disabled'
 
     # Set browse button color to default
     b_upload_resample.config(bg=DEFAULT_BG_COLOR)
@@ -1262,7 +1294,15 @@ def upload_file_resample(label_sumario,
         l_stat_startdate_val['text']=df.date.max()
         l_stat_enddate_val['text']=df.date.min()
         l_stat_dateinterv_val['text']=df.date.max()-df.date.min()
-        l_stat_sf_val['text']=f'{np.round(((df.date.max()-df.date.min())/len(df)).total_seconds()/60,3)} minute(s)'
+        l_stat_sf_val['text']=f'{np.round(((df.date.max()-df.date.min())/len(df)).total_seconds()/60,1)} minute(s)'
+        
+        # Enabling save buttons!
+        r_res_none['state'] = 'normal'
+        r_res_1m['state'] = 'normal'
+        r_res_5m['state'] = 'normal'
+        r_res_other['state'] = 'normal'
+        e_res_other['state'] = 'normal'
+        b_save['state'] = 'normal'
 
     except:
                
@@ -1390,8 +1430,8 @@ def upload_file_residuals(label_sumario,
         l_stat_startdate_val['text']=df.date.max()
         l_stat_enddate_val['text']=df.date.min()
         l_stat_dateinterv_val['text']=df.date.max()-df.date.min()
-        l_stat_sf_val['text']=f'{np.round(((df.date.max()-df.date.min())/len(df)).total_seconds()/60,3)} minute(s)'
-
+        l_stat_sf_val['text']=f'{np.round(((df.date.max()-df.date.min())/len(df)).total_seconds()/60,1)} minute(s)'
+        
     except:
                
         # Clear data preview
@@ -1441,6 +1481,12 @@ def upload_file_fft(label_sumario,
                      l_stat_enddate_val,
                      l_stat_dateinterv_val,
                      l_stat_sf_val,
+                     b_run_fft,
+                     r_hours,
+                     r_days,
+                     r_hz,
+                     b_export_fft,
+                     save_status
                      ):
 
     global df,file
@@ -1457,6 +1503,15 @@ def upload_file_fft(label_sumario,
     l_stat_enddate_val['text']=' '
     l_stat_dateinterv_val['text']=' '
     l_stat_sf_val['text']=' '
+    save_status.config(text=' ')
+
+    # Disable all buttons, since FFT is not performed yet!
+    b_run_fft['state'] = 'disabled'
+    r_hours['state'] = 'disabled'
+    r_days['state'] = 'disabled'
+    r_hz['state'] = 'disabled'
+    b_export_fft['state'] = 'disabled'
+    b_export_fft.config(bg=DEFAULT_BG_COLOR)
 
     # Set browse button color to default
     b_upload_fft.config(bg=DEFAULT_BG_COLOR)
@@ -1517,8 +1572,13 @@ def upload_file_fft(label_sumario,
         l_stat_startdate_val['text']=df.date.max()
         l_stat_enddate_val['text']=df.date.min()
         l_stat_dateinterv_val['text']=df.date.max()-df.date.min()
-        l_stat_sf_val['text']=f'{np.round(((df.date.max()-df.date.min())/len(df)).total_seconds()/60,3)} minute(s)'
+        l_stat_sf_val['text']=f'{np.round(((df.date.max()-df.date.min())/len(df)).total_seconds()/60,1)} minute(s)'
 
+        # Load successful! Enable all FFT buttons!
+        b_run_fft['state'] = 'normal'
+        r_hours['state'] = 'normal'
+        r_days['state'] = 'normal'
+        r_hz['state'] = 'normal'
 
     except:
                
@@ -1547,6 +1607,73 @@ def upload_file_fft(label_sumario,
 {df}''')    
 
     return None
+
+
+def run_fft(df,r_scale,b_export_fft,save_status):
+    
+    global df_fft
+    
+    b_export_fft['state']='disabled'
+    b_export_fft.config(bg=DEFAULT_BG_COLOR)
+    save_status.config(text=' ')
+    
+    sample_freq = (df.date[1] - df.date[0]).total_seconds() # in seconds
+    n_samples = len(df)
+    
+    # Applying FFT
+    X = np.fft.fft(df.h)
+    X[0] = 0
+    freq = np.fft.fftfreq(len(X),d=sample_freq)
+    freq = freq[0:int(n_samples/2+1)]
+    X_mag = np.abs(X)
+    X_mag = X_mag/(X_mag.max())
+    
+    # Adjusting for plotting
+    X_mag = X_mag[0:int(n_samples/2+1)]
+    X_mag = X_mag
+    
+    # Plot
+    plt.figure(figsize=(12,6)) 
+    
+    # Adjusting X-axis Scale
+    if r_scale.get()==1:
+        scale='Hours'
+        df_fft = pd.concat([pd.DataFrame((1/freq[1:-1])/(3600)),pd.DataFrame(X_mag[1:-1])],axis=1)
+        plt.plot((1/freq[1:-1])/(3600),X_mag[1:-1],color='black') #Avoid division by zero at frequency = 0 Hz
+    if r_scale.get()==2:
+        scale='Days'
+        df_fft = pd.concat([pd.DataFrame((1/freq[1:-1])/(3600*24)),pd.DataFrame(X_mag[1:-1])],axis=1)
+        plt.plot((1/freq[1:-1])/(3600*24),X_mag[1:-1],color='black') #Avoid division by zero at frequency = 0 Hz
+    if r_scale.get()==3:
+        scale='Hz'
+        df_fft = pd.concat([pd.DataFrame(freq[1:-1]),pd.DataFrame(X_mag[1:-1])],axis=1)
+        plt.plot(freq[1:-1],X_mag[1:-1],color='black')
+
+    plt.xlabel(scale)
+    plt.ylabel('Mag')
+    plt.grid()
+    
+    plt.tight_layout()
+    plt.show()
+    
+    b_export_fft['state']='normal'
+    
+    return
+
+
+def export_fft(df_fft,b_export_fft,save_status):
+    try:
+        with filedialog.asksaveasfile(mode='w', filetypes = [('Text Document', '*.txt')],
+                                      defaultextension=[".txt"]) as file:
+            df_fft.to_csv(file.name, header=None, index=None, sep=',', mode='a')
+            b_export_fft.config(bg='Light green')
+        save_status.config(text=f"File is saved in:\n{file.name}")
+    except AttributeError:
+        print("The user cancelled save")
+        b_export_fft.config(bg=DEFAULT_BG_COLOR)
+
+
+
 
 
 '''_________________________________________________________________________'''
@@ -1625,7 +1752,7 @@ def plot_frame():
                                                       cb_msl_all=cb_msl_all,
                                                       ))
     b_upload_plot.configure(anchor="center")
-    b_upload_plot.place(relx=.5, y=147,anchor='center')
+    b_upload_plot.place(relx=.5, y=145,anchor='center')
 
     # Botão de plot
     b_plot_plot = tk.Button(plot_frame,text='Plot Results',width=6,fg = 'black',font=('raleway', 10,'bold'),
@@ -1739,7 +1866,9 @@ def bw_frame():
                     padx=73,pady=4,borderwidth=4,bg=DEFAULT_BG_COLOR,
                     command=lambda: save_file(b_save,
                                               save_status,
-                                              df=filtered_bw))
+                                              df=filtered_bw,
+                                              r_res=r_res,
+                                              e_res_other=e_res_other))
     b_save.place(x=28,y=51)
     b_save['state'] = tk.DISABLED
 
@@ -1762,7 +1891,6 @@ def bw_frame():
                                                       b_save=b_save,
                                                       e_cutoff=e_cutoff,
                                                       e_order=e_order,
-                                                      # cb_btype=cb_btype,
                                                       save_status=save_status,
                                                       l_stat_hmax_val=l_stat_hmax_val,
                                                       l_stat_hmin_val=l_stat_hmin_val,
@@ -1788,10 +1916,6 @@ def bw_frame():
                                                       r_res_5m=r_res_5m,
                                                       r_res_other=r_res_other,
                                                       e_res_other=e_res_other,
-                                                      # r_res=r_res,
-                                                      # r_xunits=r_xunits,
-                                                      # r_yunits=r_yunits,
-                                                      # msl_all=msl_all
                                                       ))
     b_upload_bw.configure(anchor="center")
     b_upload_bw.place(relx=.5, y=145,anchor='center')
@@ -1823,25 +1947,25 @@ def bw_frame():
     # LABEL/ENTRY FS
     l_fs = tk.Label(frame_bw,text='Sampling Frequency: ')
     l_fs.place(x=10,y=4)
-    e_fs = tk.Entry(frame_bw,width=4)
+    e_fs = tk.Entry(frame_bw,width=7)
     e_fs['state'] = 'disabled'
     e_fs.place(x=133,y=6)
     l_fs_units = tk.Label(frame_bw,text='Hz')
-    l_fs_units.place(x=160,y=4)
+    l_fs_units.place(x=179,y=4)
 
     # LABEL/ENTRY CUTOFF
     l_cutoff = tk.Label(frame_bw,text='Cut-off Frequency: ')
     l_cutoff.place(x=10,y=24)
-    e_cutoff = tk.Entry(frame_bw,width=4)
+    e_cutoff = tk.Entry(frame_bw,width=7)
     e_cutoff['state'] = 'disabled'
     e_cutoff.place(x=133,y=26)
     l_cutoff_units = tk.Label(frame_bw,text='Hz')
-    l_cutoff_units.place(x=160,y=24)
+    l_cutoff_units.place(x=179,y=24)
     
     # LABEL/ENTRY FILTER ORDER
     l_order = tk.Label(frame_bw,text='Filter Order: ')
     l_order.place(x=10,y=44)
-    e_order = tk.Entry(frame_bw,width=4)
+    e_order = tk.Entry(frame_bw,width=7)
     e_order['state'] = 'disabled'
     e_order.place(x=133,y=47)    
 
@@ -1878,10 +2002,7 @@ def bw_frame():
                                            r_res_5m=r_res_5m,
                                            r_res_other=r_res_other,
                                            e_res_other=e_res_other,
-                                           r_res=r_res,
-                                           r_xunits=r_xunits,
-                                           r_yunits=r_yunits,
-                                           msl_all=msl_all))
+                                           ))
     b_run_bw.place(x=30,y=70)
     b_run_bw['state'] = tk.DISABLED
 
@@ -1905,12 +2026,17 @@ def resample_frame():
     title = 'Resample'
     frame = base_layer(DEFAULT_BG_COLOR,title,master)
     
-##### Input frame #############################################################
+    # Layout input/browse  
     lframe,e_skip_hrows,e_skip_frows,e_date_col,e_h_col,lframe_delimiter,r,e_other,upload_status,l_stat_hmax_val,l_stat_hmin_val,l_stat_hmean_val,l_stat_startdate_val,l_stat_enddate_val,l_stat_dateinterv_val,l_stat_sf_val,_sum = inpux_box(frame)
+
+    # Layout save
+    x=290
+    y=5    
+    frame_save,r_res,r_res_none,r_res_1m,r_res_5m,r_res_other,e_res_other,save_status = save_box(frame,x,y)    
 
     # Botão upload
     b_upload_resample = tk.Button(lframe, text='Browse file', font=('raleway', 10,'bold'),
-                          fg = 'black',width=6,padx=73,pady=4,borderwidth=4,
+                          fg = 'black',width=6,padx=73,pady=4,borderwidth=4,bg=DEFAULT_BG_COLOR,
                           command = lambda:upload_file_resample(label_sumario=_sum,
                                                       upload_status=upload_status,
                                                       date_col=e_date_col,
@@ -1926,11 +2052,27 @@ def resample_frame():
                                                       l_stat_startdate_val=l_stat_startdate_val,
                                                       l_stat_enddate_val=l_stat_enddate_val,
                                                       l_stat_dateinterv_val=l_stat_dateinterv_val,
-                                                      l_stat_sf_val=l_stat_sf_val
+                                                      l_stat_sf_val=l_stat_sf_val,
+                                                      r_res_none=r_res_none,
+                                                      r_res_1m=r_res_1m,
+                                                      r_res_5m=r_res_5m,
+                                                      r_res_other=r_res_other,
+                                                      e_res_other=e_res_other,
+                                                      b_save=b_save
                                                       ))
     b_upload_resample.configure(anchor="center")
     b_upload_resample.place(relx=.5, y=145,anchor='center')
 
+    # Botão de salvar
+    b_save = tk.Button(frame_save,text='Save File',width=6,fg = 'black',font=('raleway', 10,'bold'),
+                    padx=73,pady=4,borderwidth=4,bg=DEFAULT_BG_COLOR,
+                    command=lambda: save_file(b_save,
+                                              save_status,
+                                              df=df,
+                                              r_res=r_res,
+                                              e_res_other=e_res_other))
+    b_save.place(x=28,y=51)
+    b_save['state'] = tk.DISABLED
 
 
 def residuals_frame():
@@ -1991,7 +2133,7 @@ def fft_frame():
     title = 'Spectral/Harmonic Analysis'
     frame = base_layer(DEFAULT_BG_COLOR,title,master)
 
-##### Input frame #############################################################
+    # Layout input/browse  
     lframe,e_skip_hrows,e_skip_frows,e_date_col,e_h_col,lframe_delimiter,r,e_other,upload_status,l_stat_hmax_val,l_stat_hmin_val,l_stat_hmean_val,l_stat_startdate_val,l_stat_enddate_val,l_stat_dateinterv_val,l_stat_sf_val,_sum = inpux_box(frame)
 
     # Botão upload
@@ -2012,10 +2154,67 @@ def fft_frame():
                                                       l_stat_startdate_val=l_stat_startdate_val,
                                                       l_stat_enddate_val=l_stat_enddate_val,
                                                       l_stat_dateinterv_val=l_stat_dateinterv_val,
-                                                      l_stat_sf_val=l_stat_sf_val
+                                                      l_stat_sf_val=l_stat_sf_val,
+                                                      b_run_fft=b_run_fft,
+                                                      r_hours=r_hours,
+                                                      r_days=r_days,
+                                                      r_hz=r_hz,
+                                                      b_export_fft=b_export_fft,
+                                                      save_status=save_status
                                                       ))
     b_upload_fft.configure(anchor="center")
     b_upload_fft.place(relx=.5, y=145,anchor='center')
+
+
+    # FFT 
+    
+    # Main FFT frame
+    frame_fft = ttk.LabelFrame(frame,text='Fast Fourier Transform',height=230,width=267)
+    frame_fft.place(x=290,y=5)
+    
+    # FFT Scale frame
+    frame_fft_scale = tk.LabelFrame(frame_fft,text='X-axis Scale',height=50,width=258,
+                               font=('raleway', 10,'bold'))
+    frame_fft_scale.place(x=3,y=5)
+    
+    # Scale Options
+    r_scale = tk.IntVar()
+    r_scale.set('1')
+    # Hours 
+    r_hours = tk.Radiobutton(frame_fft_scale,text='Hours',variable=r_scale,value=1,state='disabled')
+    r_hours.place(x=10,y=2)  
+    # Days
+    r_days = tk.Radiobutton(frame_fft_scale,text='Days',variable=r_scale,value=2,state='disabled')
+    r_days.place(x=100,y=2)       
+    # Hz
+    r_hz = tk.Radiobutton(frame_fft_scale,text='Hz',variable=r_scale,value=3,state='disabled')
+    r_hz.place(x=190,y=2)      
+
+    # Button run FFT
+    b_run_fft = tk.Button(frame_fft, text='Run FFT & Plot', font=('raleway', 10,'bold'),
+                          fg = 'black',width=6,padx=73,pady=4,borderwidth=4,state='disabled',
+                          command = lambda: run_fft(df,r_scale,b_export_fft,save_status))
+    b_run_fft.configure(anchor="center")
+    b_run_fft.place(relx=.5, y=77,anchor='center')    
+
+    # Button export FFT
+    b_export_fft = tk.Button(frame_fft, text='Export ASCII', font=('raleway', 10,'bold'),
+                          fg = 'black',width=6,padx=73,pady=4,borderwidth=4,state='disabled',
+                          command = lambda: export_fft(df_fft,b_export_fft,save_status))
+    b_export_fft.configure(anchor="center")
+    b_export_fft.place(relx=.5, y=120,anchor='center')  
+    
+    # Save Status
+    save_status = tk.Label(frame_fft, text=' ',wraplength=260,width=36,
+                           font=('Rayleway','9',))
+    save_status.configure(anchor="center",bg=DEFAULT_BG_COLOR)
+    save_status.place(x=2,y=140) 
+
+    # Help FFT
+    b_help_fft = tk.Button(frame_fft,text='?',font=('Rayleway','16','bold'),
+                            fg='white',bg='#1c4366',command = help_fft_popup)
+    b_help_fft.place(x=240,y=-7,width=20,height=20) 
+
 
 
 def tideZoning_frame():
