@@ -32,7 +32,8 @@ def call_style():
                 'background': DEFAULT_BG_COLOR,
                 'relief': 'solid',
                 'bordercolor': '#1c4366',
-                # 'bordercolor': 'black',
+                # 'highlightcolor': 'black',
+                # 'highlightbackground': 'black',
                 'borderwidth': 2
             }
         },
@@ -45,6 +46,8 @@ def call_style():
         }
     })
     style.theme_use('style')
+   
+    
     return style
 
 # Defining base layer for each menu option 
@@ -304,7 +307,7 @@ def save_file(b_save,save_status,df,r_res,e_res_other):
 # Layout of input/browse box.
 def inpux_box(frame,box_name,x,y):
     
-    lframe = ttk.LabelFrame(frame,text=box_name)
+    lframe = ttk.LabelFrame(frame,text=box_name,labelanchor='n')
     # lframe = tk.LabelFrame(frame,text='Data Input',font=('raleway', 11,'bold italic'),fg='black')
     lframe.place(x=x,y=y,height=560,width=267)
     
@@ -363,7 +366,10 @@ def inpux_box(frame,box_name,x,y):
     
     # Help input button
     b_help_input = tk.Button(lframe,text='?',font=('Rayleway','16','bold'),
-                             fg='red',bg=DEFAULT_BG_COLOR,command = help_input_popup)
+                             fg='red',
+                             # bg=DEFAULT_BG_COLOR,
+                             bg='#d8d8d8',
+                             command = help_input_popup)
     b_help_input.place(x=239,y=-7,width=20,height=20)
 
     # Status do upload
@@ -423,7 +429,7 @@ def inpux_box(frame,box_name,x,y):
 # Layout of plot box.
 def plot_box(frame,x,y):
     
-    plot_frame = ttk.LabelFrame(frame,text='Plot Options')
+    plot_frame = ttk.LabelFrame(frame,text='Plot Options',labelanchor='n')
     plot_frame.place(x=x,y=y,height=238,width=267)
 
     # X-axis Units
@@ -493,7 +499,7 @@ def plot_box(frame,x,y):
 # Layout of save box.
 def save_box(frame,x,y):
     # Frame save
-    frame_save = ttk.LabelFrame(frame,text='Save Options')
+    frame_save = ttk.LabelFrame(frame,text='Save Options',labelanchor='n')
     frame_save.place(x=x,y=y,width=267,height=167)
     
     # Frame resample options
@@ -2048,7 +2054,7 @@ def bw_frame():
     
 ##### Buttlerworth filter!#####################################################
     
-    frame_bw = ttk.LabelFrame(frame,text='Filtering Parameters')
+    frame_bw = ttk.LabelFrame(frame,text='Filtering Parameters',labelanchor='n')
     frame_bw.place(x=290,y=5,height=135,width=267)
     
     # LABEL/ENTRY FS
@@ -2264,7 +2270,7 @@ def residuals_frame():
     b_upload_residuals_PRE.place(relx=.5, y=145,anchor='center')
 
     # Residuals frame
-    frame_res = ttk.LabelFrame(frame, text='Compute Residuals')
+    frame_res = ttk.LabelFrame(frame, text='Compute Residuals',labelanchor='n')
     frame_res.place(x=575,y=5,width=267,height=100)
 
 
@@ -2323,8 +2329,8 @@ def fft_frame():
     # FFT 
     
     # Main FFT frame
-    frame_fft = ttk.LabelFrame(frame,text='Fast Fourier Transform',height=230,width=267)
-    frame_fft.place(x=290,y=5)
+    frame_fft = ttk.LabelFrame(frame,text='Fast Fourier Transform',labelanchor='n')
+    frame_fft.place(x=290,y=5,height=230,width=267)
     
     # FFT Scale frame
     frame_fft_scale = tk.LabelFrame(frame_fft,text='X-axis Scale',height=50,width=258,
