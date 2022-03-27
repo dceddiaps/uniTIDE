@@ -312,7 +312,7 @@ def inpux_box(frame,box_name,x,y):
     lframe.place(x=x,y=y,height=560,width=267)
     
     # Frame input parameters
-    lframe_format = tk.LabelFrame(lframe,text='Input Parameters',
+    lframe_format = tk.LabelFrame(lframe,text='Input Parameters',labelanchor='n',
                                   font=('raleway', 10,'bold'),fg='black')
     lframe_format.place(x=3,y=5,width=257,height=115)
     
@@ -345,8 +345,8 @@ def inpux_box(frame,box_name,x,y):
     e_h_col.place(x=110,y=70)
     
     # Frame Delimiter
-    lframe_delimiter = tk.LabelFrame(lframe,text='Delimiter',
-                                  font=('raleway', 10,'bold'),fg='black', padx=10,pady=10)    
+    lframe_delimiter = tk.LabelFrame(lframe,text='Delimiter',labelanchor='n',
+                                  font=('raleway', 9,'bold'),fg='black', padx=10,pady=10)    
     lframe_delimiter.place(x=150,y=25,width=105,height=75)
     
     # DEMILIMITER OPTIONS
@@ -378,7 +378,8 @@ def inpux_box(frame,box_name,x,y):
 
     # Statistics of inputted data
     #filling labels:
-    lframe_stat = tk.LabelFrame(lframe,text='Statistics',font=('raleway', 10,'bold'),fg='black')
+    lframe_stat = tk.LabelFrame(lframe,text='Statistics',labelanchor='n',
+                                font=('raleway', 10,'bold'),fg='black')
     lframe_stat.place(x=3,y=390,height=145,width=257)
     l_stat_hmax = tk.Label(lframe_stat,text='Hmax:')
     l_stat_hmax.place(x=0,y=0)
@@ -433,7 +434,8 @@ def plot_box(frame,x,y):
     plot_frame.place(x=x,y=y,height=238,width=267)
 
     # X-axis Units
-    xunits_frame = tk.LabelFrame(plot_frame,text='Date Units',font=('raleway', 10,'bold'),fg='black')
+    xunits_frame = tk.LabelFrame(plot_frame,text='Date Units',labelanchor='n',
+                                 font=('raleway', 10,'bold'),fg='black')
     xunits_frame.place(x=3,y=5,height=88,width=127)
     # Radio buttons for X-axis Units
     r_xunits = tk.IntVar()
@@ -446,7 +448,8 @@ def plot_box(frame,x,y):
     r_dt.place(x=10,y=32)      
  
     # Y-axis Units
-    yunits_frame = tk.LabelFrame(plot_frame,text='Height Units',font=('raleway', 10,'bold'),fg='black')
+    yunits_frame = tk.LabelFrame(plot_frame,text='Height Units',labelanchor='n',
+                                 font=('raleway', 10,'bold'),fg='black')
     yunits_frame.place(x=133,y=5,height=88,width=127)   
     # Radio buttons for Y-axis Units
     r_yunits = tk.IntVar()
@@ -465,7 +468,8 @@ def plot_box(frame,x,y):
     e_o.place(x=70,y=44)
 
     # Mean sea level options
-    msl_frame = tk.LabelFrame(plot_frame,text='Mean Sea Level',font=('raleway', 10,'bold'),fg='black')
+    msl_frame = tk.LabelFrame(plot_frame,text='Mean Sea Level',labelanchor='n',
+                              font=('raleway', 10,'bold'),fg='black')
     msl_frame.place(x=3,y=100,height=70,width=257)
     # Checkboxes for MSL plottong options
     msl_y = tk.IntVar()
@@ -503,7 +507,8 @@ def save_box(frame,x,y):
     frame_save.place(x=x,y=y,width=267,height=167)
     
     # Frame resample options
-    frame_resamp = tk.LabelFrame(frame_save,text='Resample',font=('raleway', 10,'bold'))
+    frame_resamp = tk.LabelFrame(frame_save,text='Resample',labelanchor='n',
+                                 font=('raleway', 10,'bold'))
     frame_resamp.place(x=3,y=5,width=257,height=43)
 
     # Resample options
@@ -665,6 +670,10 @@ def upload_file_plot(label_sumario,
                      cb_msl_o,
                      e_msl_o,
                      cb_msl_all,
+                     msl_y,
+                     msl_m,
+                     msl_d,
+                     msl_o
 ):
 
     global df,file
@@ -696,6 +705,11 @@ def upload_file_plot(label_sumario,
     cb_msl_o['state']='disabled'
     e_msl_o['state']='disabled'  
     cb_msl_all['state']='disabled'  
+    msl_y.set(0)
+    msl_m.set(0)
+    msl_d.set(0)
+    msl_o.set(0)
+    e_msl_o.delete(0,tk.END)
 
     # Set browse button color to default
     b_upload_plot.config(bg=DEFAULT_BG_COLOR)
@@ -850,6 +864,7 @@ def upload_file_qc(label_sumario,
 
     # Set browse button color to default
     b_upload_qc.config(bg=DEFAULT_BG_COLOR)
+
     
     # Delete any data preview information
     label_sumario.delete('0.0',tk.END)
@@ -986,6 +1001,10 @@ def upload_file_bw(e_fs,
                    r_res_5m,
                    r_res_other,
                    e_res_other,
+                   msl_y,
+                   msl_m,
+                   msl_d,
+                   msl_o
                    ):
     
     """
@@ -1045,6 +1064,7 @@ def upload_file_bw(e_fs,
     r_o['state'] = 'disabled'
     e_o['state'] = 'disabled'
     cb_msl_y['state'] = 'disabled'
+    e_msl_o['text'] = " "
     cb_msl_m['state'] = 'disabled'
     cb_msl_d['state'] = 'disabled'
     cb_msl_o['state'] = 'disabled'
@@ -1054,6 +1074,11 @@ def upload_file_bw(e_fs,
     r_res_5m['state'] = 'disabled'
     r_res_other['state'] = 'disabled'
     e_res_other['state'] = 'disabled'
+    msl_y.set(0)
+    msl_m.set(0)
+    msl_d.set(0)
+    msl_o.set(0)
+    e_msl_o.delete(0,tk.END)
 
     # Delete any data preview information
     label_sumario.delete('0.0',tk.END)
@@ -1154,18 +1179,6 @@ def upload_file_bw(e_fs,
 {df}''')    
 
             
-        b_upload_bw.config(bg=DEFAULT_BG_COLOR)
-        b_run_bw['state'] = 'disabled'
-        b_plot_bw['state']='disabled'
-        b_save['state']='disabled'        
-        save_status['text'] = ""
-        b_save.config(bg=DEFAULT_BG_COLOR)
-        e_fs.delete(0,tk.END)
-        e_fs['state'] = 'disabled'
-        e_cutoff.delete(0,tk.END)
-        e_cutoff['state'] = 'disabled'
-        e_order.delete(0,tk.END)
-        e_order['state'] = 'disabled'
 
 
 def run_bw(df,
@@ -1821,7 +1834,7 @@ def plot_frame():
     lframe,e_skip_hrows,e_skip_frows,e_date_col,e_h_col,lframe_delimiter,r,e_other,upload_status,l_stat_hmax_val,l_stat_hmin_val,l_stat_hmean_val,l_stat_startdate_val,l_stat_enddate_val,l_stat_dateinterv_val,l_stat_sf_val,_sum = inpux_box(frame,box_name,x,y,)
 
     # Layout plot
-    x=290
+    x=280
     y=5
     plot_frame,xunits_frame,r_xunits,yunits_frame,r_yunits,msl_y,msl_m,msl_d,msl_o,msl_all,e_msl_o,r_julian,r_dt,r_m,r_f,r_o,e_o,cb_msl_y,cb_msl_m,cb_msl_d,cb_msl_o,cb_msl_all=plot_box(frame,x,y)
 
@@ -1857,6 +1870,10 @@ def plot_frame():
                                                       cb_msl_o=cb_msl_o,
                                                       e_msl_o=e_msl_o,
                                                       cb_msl_all=cb_msl_all,
+                                                      msl_y=msl_y,
+                                                      msl_m=msl_m,
+                                                      msl_d=msl_d,
+                                                      msl_o=msl_o,
                                                       ))
     b_upload_plot.configure(anchor="center")
     b_upload_plot.place(relx=.5, y=145,anchor='center')
@@ -1965,12 +1982,12 @@ def bw_frame():
     lframe,e_skip_hrows,e_skip_frows,e_date_col,e_h_col,lframe_delimiter,r,e_other,upload_status,l_stat_hmax_val,l_stat_hmin_val,l_stat_hmean_val,l_stat_startdate_val,l_stat_enddate_val,l_stat_dateinterv_val,l_stat_sf_val,_sum = inpux_box(frame,box_name,x,y)
 
     # Layout plot
-    x=290
+    x=280
     y=150
     plot_frame,xunits_frame,r_xunits,yunits_frame,r_yunits,msl_y,msl_m,msl_d,msl_o,msl_all,e_msl_o,r_julian,r_dt,r_m,r_f,r_o,e_o,cb_msl_y,cb_msl_m,cb_msl_d,cb_msl_o,cb_msl_all=plot_box(frame,x,y)
 
     # Layout save
-    x=290
+    x=280
     y=398    
     frame_save,r_res,r_res_none,r_res_1m,r_res_5m,r_res_other,e_res_other,save_status = save_box(frame,x,y)
 
@@ -2029,6 +2046,10 @@ def bw_frame():
                                                       r_res_5m=r_res_5m,
                                                       r_res_other=r_res_other,
                                                       e_res_other=e_res_other,
+                                                      msl_y=msl_y,
+                                                      msl_m=msl_m,
+                                                      msl_d=msl_d,
+                                                      msl_o=msl_o
                                                       ))
     b_upload_bw.configure(anchor="center")
     b_upload_bw.place(relx=.5, y=145,anchor='center')
@@ -2055,7 +2076,7 @@ def bw_frame():
 ##### Buttlerworth filter!#####################################################
     
     frame_bw = ttk.LabelFrame(frame,text='Filtering Parameters',labelanchor='n')
-    frame_bw.place(x=290,y=5,height=135,width=267)
+    frame_bw.place(x=280,y=5,height=135,width=267)
     
     # LABEL/ENTRY FS
     l_fs = tk.Label(frame_bw,text='Sampling Frequency: ')
@@ -2214,7 +2235,7 @@ def residuals_frame():
     lframe,e_skip_hrows,e_skip_frows,e_date_col,e_h_col,lframe_delimiter,r,e_other,upload_status,l_stat_hmax_val,l_stat_hmin_val,l_stat_hmean_val,l_stat_startdate_val,l_stat_enddate_val,l_stat_dateinterv_val,l_stat_sf_val,_sum = inpux_box(frame,box_name,x,y)
 
     # Layout input/browse PREVISTA
-    x = 290
+    x = 280
     y = 5
     box_name = 'Data Input (PREDICTED)'
     lframe2,e_skip_hrows2,e_skip_frows2,e_date_col2,e_h_col2,lframe_delimiter2,r2,e_other2,upload_status2,l_stat_hmax_val2,l_stat_hmin_val2,l_stat_hmean_val2,l_stat_startdate_val2,l_stat_enddate_val2,l_stat_dateinterv_val2,l_stat_sf_val2,_sum2 = inpux_box(frame,box_name,x,y)
@@ -2271,7 +2292,7 @@ def residuals_frame():
 
     # Residuals frame
     frame_res = ttk.LabelFrame(frame, text='Compute Residuals',labelanchor='n')
-    frame_res.place(x=575,y=5,width=267,height=100)
+    frame_res.place(x=555,y=5,width=267,height=100)
 
 
 
@@ -2330,7 +2351,7 @@ def fft_frame():
     
     # Main FFT frame
     frame_fft = ttk.LabelFrame(frame,text='Fast Fourier Transform',labelanchor='n')
-    frame_fft.place(x=290,y=5,height=230,width=267)
+    frame_fft.place(x=280,y=5,height=230,width=267)
     
     # FFT Scale frame
     frame_fft_scale = tk.LabelFrame(frame_fft,text='X-axis Scale',height=50,width=258,
@@ -2445,7 +2466,7 @@ def openwf_frame():
 # Creating main window (root)
 master = tk.Tk()
 master.title('uniTIDE')
-master.geometry("863x630")
+master.geometry("843x633")
 # master.maxsize(800,800)
 master.configure(bg='#1c4366')
 
