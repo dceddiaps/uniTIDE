@@ -51,7 +51,7 @@ def call_style():
     return style
 
 # Defining base layer for each menu option 
-def base_layer(DEFAULT_BG_COLOR,title,master):
+def base_layer(DEFAULT_BG_COLOR,title,master,frame_responsive_width):
     # Criando Frame base
     frame = tk.Frame(master,bg='#1c4366')
     frame.place(relwidth=0.99,relheight=0.99,relx=0.005,rely=0.005)
@@ -60,8 +60,20 @@ def base_layer(DEFAULT_BG_COLOR,title,master):
     l_title.place(relx=.5, rely=.04,anchor='center')
     
     frame = tk.Frame(frame, bg=DEFAULT_BG_COLOR)
-    frame.place(relwidth=0.99,relheight=0.91,relx=0.005,rely=0.08)
-    return frame
+    frame.place(relwidth=0.99,  # EAST
+                relheight=0.91, # SOUTH
+                relx=0.005,     # WEST
+                rely=0.08)      # NORTH
+    
+    # Creating responsive frame 
+    frame_responsive = tk.Frame(frame, bg=DEFAULT_BG_COLOR,
+                                width=frame_responsive_width,
+                                height=600)
+    frame_responsive.pack()
+    # canvas = tk.Canvas(frame, bg="blue", height=250, width=300)
+    # canvas.pack()
+    
+    return frame_responsive
 
 # Function for Welcome!>Info and when program starts.
 def the_welcome(root):
@@ -1825,7 +1837,7 @@ def plot_frame():
 
     # Creating base frame
     title = 'Plot tide'
-    frame = base_layer(DEFAULT_BG_COLOR,title,master)
+    frame = base_layer(DEFAULT_BG_COLOR,title,master,frame_responsive_width=551)
     
     # Layout imput/browse 
     x = 5
@@ -1911,7 +1923,7 @@ def compare_frame():
 
     # Creating base frame
     title = 'Compare Tides'
-    frame = base_layer(DEFAULT_BG_COLOR,title,master)
+    frame = base_layer(DEFAULT_BG_COLOR,title,master,frame_responsive_width=551)
 
 
 def qc_frame():
@@ -1927,7 +1939,7 @@ def qc_frame():
 
     # Creating base frame
     title = 'Quality Control'
-    frame = base_layer(DEFAULT_BG_COLOR,title,master)
+    frame = base_layer(DEFAULT_BG_COLOR,title,master,frame_responsive_width=551)
     
     # Layout input/browse file
     x = 5
@@ -1973,7 +1985,7 @@ def bw_frame():
 
     # Creating base frame
     title = 'Buttlerworth filter'
-    frame = base_layer(DEFAULT_BG_COLOR,title,master)
+    frame = base_layer(DEFAULT_BG_COLOR,title,master,frame_responsive_width=551)
 
     # Layout upload/browse file
     x = 5
@@ -2158,7 +2170,7 @@ def resample_frame():
 
     # Creating base frame
     title = 'Resample'
-    frame = base_layer(DEFAULT_BG_COLOR,title,master)
+    frame = base_layer(DEFAULT_BG_COLOR,title,master,frame_responsive_width=551)
     
     # Layout input/browse  
     x = 5
@@ -2167,7 +2179,7 @@ def resample_frame():
     lframe,e_skip_hrows,e_skip_frows,e_date_col,e_h_col,lframe_delimiter,r,e_other,upload_status,l_stat_hmax_val,l_stat_hmin_val,l_stat_hmean_val,l_stat_startdate_val,l_stat_enddate_val,l_stat_dateinterv_val,l_stat_sf_val,_sum = inpux_box(frame,box_name,x,y)
 
     # Layout save
-    x=290
+    x=280
     y=5    
     frame_save,r_res,r_res_none,r_res_1m,r_res_5m,r_res_other,e_res_other,save_status = save_box(frame,x,y)    
 
@@ -2226,7 +2238,7 @@ def residuals_frame():
 
     # Creating base frame
     title = 'Residuals'
-    frame = base_layer(DEFAULT_BG_COLOR,title,master)
+    frame = base_layer(DEFAULT_BG_COLOR,title,master,frame_responsive_width=826)
 
     # Layout input/browse OBSERVED
     x = 5
@@ -2309,7 +2321,7 @@ def fft_frame():
 
     # Creating base frame
     title = 'Spectral/Harmonic Analysis'
-    frame = base_layer(DEFAULT_BG_COLOR,title,master)
+    frame = base_layer(DEFAULT_BG_COLOR,title,master,frame_responsive_width=551)
 
     # Layout input/browse  
     x = 5
@@ -2411,7 +2423,7 @@ def tideZoning_frame():
 
     # Creating base frame
     title = 'Tide Zoning'
-    frame = base_layer(DEFAULT_BG_COLOR,title,master)
+    frame = base_layer(DEFAULT_BG_COLOR,title,master,frame_responsive_width=551)
 
 
 
@@ -2428,7 +2440,7 @@ def tidePrediction_frame():
 
     # Creating base frame
     title = 'Tide Prediction'
-    frame = base_layer(DEFAULT_BG_COLOR,title,master)
+    frame = base_layer(DEFAULT_BG_COLOR,title,master,frame_responsive_width=551)
 
 
 
@@ -2444,7 +2456,7 @@ def createwf_frame():
 
     # Creating base frame
     title = 'Create Workflow'
-    frame = base_layer(DEFAULT_BG_COLOR,title,master)
+    frame = base_layer(DEFAULT_BG_COLOR,title,master,frame_responsive_width=551)
 
 
 
@@ -2460,7 +2472,7 @@ def openwf_frame():
 
     # Creating base frame
     title = 'Open Workflow'
-    frame = base_layer(DEFAULT_BG_COLOR,title,master)
+    frame = base_layer(DEFAULT_BG_COLOR,title,master,frame_responsive_width=551)
 
 
 # Creating main window (root)
@@ -2469,6 +2481,8 @@ master.title('uniTIDE')
 master.geometry("843x633")
 # master.maxsize(800,800)
 master.configure(bg='#1c4366')
+# Making unable to resize in Y axis!
+master.resizable(True, 0)
 
 # Doing the proper Welcome!
 the_welcome(master)
