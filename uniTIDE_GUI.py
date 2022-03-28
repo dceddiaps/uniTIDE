@@ -23,6 +23,16 @@ DEFAULT_BG_COLOR='#f1f0f1'
 #_________________________________GLOBAL DEFS_________________________________#
 
 
+# Fade Out Effect 
+def fade_out(root):
+    alpha = root.attributes("-alpha")
+    if alpha > 0:
+        alpha -= .1
+        root.attributes("-alpha", alpha)
+        root.after(100, lambda: fade_out(root))
+    else:
+        root.destroy()
+        
 # Defining style for all main boxes
 def call_style():
     style = ttk.Style()
@@ -284,8 +294,6 @@ def help_fft_popup():
 
 # Just save
 def save_file(b_save,save_status,df,r_res,e_res_other):
-    
-    print(len(e_res_other.get()))
     
     try:
         
@@ -797,8 +805,8 @@ def upload_file_plot(label_sumario,
         l_stat_hmax_val['text']=df.h.max()
         l_stat_hmin_val['text']=df.h.min()
         l_stat_hmean_val['text']=np.round(df.h.mean(),3)
-        l_stat_startdate_val['text']=df.date.max()
-        l_stat_enddate_val['text']=df.date.min()
+        l_stat_startdate_val['text']=df.date.min()
+        l_stat_enddate_val['text']=df.date.max()
         l_stat_dateinterv_val['text']=df.date.max()-df.date.min()
         l_stat_sf_val['text']=f'{np.round(((df.date.max()-df.date.min())/len(df)).total_seconds()/60,1)} minute(s)'
 
@@ -1158,8 +1166,8 @@ def upload_file_bw(e_fs,
         l_stat_hmax_val['text']=df.h.max()
         l_stat_hmin_val['text']=df.h.min()
         l_stat_hmean_val['text']=np.round(df.h.mean(),3)
-        l_stat_startdate_val['text']=df.date.max()
-        l_stat_enddate_val['text']=df.date.min()
+        l_stat_startdate_val['text']=df.date.min()
+        l_stat_enddate_val['text']=df.date.max()
         l_stat_dateinterv_val['text']=df.date.max()-df.date.min()
         l_stat_sf_val['text']=f'{np.round(((df.date.max()-df.date.min())/len(df)).total_seconds()/60,1)} minute(s)'
 
@@ -1408,8 +1416,8 @@ def upload_file_resample(label_sumario,
         l_stat_hmax_val['text']=df.h.max()
         l_stat_hmin_val['text']=df.h.min()
         l_stat_hmean_val['text']=np.round(df.h.mean(),3)
-        l_stat_startdate_val['text']=df.date.max()
-        l_stat_enddate_val['text']=df.date.min()
+        l_stat_startdate_val['text']=df.date.min()
+        l_stat_enddate_val['text']=df.date.max()
         l_stat_dateinterv_val['text']=df.date.max()-df.date.min()
         l_stat_sf_val['text']=f'{np.round(((df.date.max()-df.date.min())/len(df)).total_seconds()/60,1)} minute(s)'
         
@@ -1552,8 +1560,8 @@ def upload_file_residuals(label_sumario,
         l_stat_hmax_val['text']=df.h.max()
         l_stat_hmin_val['text']=df.h.min()
         l_stat_hmean_val['text']=np.round(df.h.mean(),3)
-        l_stat_startdate_val['text']=df.date.max()
-        l_stat_enddate_val['text']=df.date.min()
+        l_stat_startdate_val['text']=df.date.min()
+        l_stat_enddate_val['text']=df.date.max()
         l_stat_dateinterv_val['text']=df.date.max()-df.date.min()
         l_stat_sf_val['text']=f'{np.round(((df.date.max()-df.date.min())/len(df)).total_seconds()/60,1)} minute(s)'
         
@@ -1701,8 +1709,8 @@ def upload_file_fft(label_sumario,
         l_stat_hmax_val['text']=df.h.max()
         l_stat_hmin_val['text']=df.h.min()
         l_stat_hmean_val['text']=np.round(df.h.mean(),3)
-        l_stat_startdate_val['text']=df.date.max()
-        l_stat_enddate_val['text']=df.date.min()
+        l_stat_startdate_val['text']=df.date.min()
+        l_stat_enddate_val['text']=df.date.max()
         l_stat_dateinterv_val['text']=df.date.max()-df.date.min()
         l_stat_sf_val['text']=f'{np.round(((df.date.max()-df.date.min())/len(df)).total_seconds()/60,1)} minute(s)'
 
@@ -1810,6 +1818,9 @@ def export_fft(df_fft,b_export_fft,save_status):
 
 
 def info_frame():
+    
+    # Resize master window
+    # master.geometry("566x633")
        
     frame = tk.Frame(master,bg='#1c4366').pack()
     the_welcome(frame)
@@ -1828,6 +1839,9 @@ def plot_frame():
 
     global df
     DEFAULT_BG_COLOR='#f1f0f1'
+    
+    # Resize master window
+    # master.geometry("566x633")
 
     # Defining window style
     try:
@@ -1909,11 +1923,13 @@ def plot_frame():
     b_plot_plot['state'] = tk.DISABLED
 
 
-
 def compare_frame():
 
     global df
     DEFAULT_BG_COLOR='#f1f0f1'
+
+    # Resize master window
+    # master.geometry("566x633")
 
     # Defining window style
     try:
@@ -1930,6 +1946,9 @@ def qc_frame():
 
     global df
     DEFAULT_BG_COLOR='#f1f0f1'
+
+    # Resize master window
+    # master.geometry("566x633")
 
     # Defining window style
     try:
@@ -1976,6 +1995,9 @@ def bw_frame():
     
     global df
     DEFAULT_BG_COLOR='#f1f0f1'
+
+    # Resize master window
+    # master.geometry("566x633")
 
     # Defining window style
     try:
@@ -2162,6 +2184,9 @@ def resample_frame():
     global df
     DEFAULT_BG_COLOR='#f1f0f1'
 
+    # Resize master window
+    # master.geometry("566x633")
+
     # Defining window style
     try:
         style = call_style()
@@ -2229,6 +2254,9 @@ def residuals_frame():
 
     global df
     DEFAULT_BG_COLOR='#f1f0f1'
+
+    # Resize master window
+    # master.geometry("843x633")
 
     # Defining window style
     try:
@@ -2312,6 +2340,9 @@ def fft_frame():
 
     global df
     DEFAULT_BG_COLOR='#f1f0f1'
+
+    # Resize master window
+    # master.geometry("566x633")
 
     # Defining window style
     try:
@@ -2414,6 +2445,9 @@ def tideZoning_frame():
 
     global df
     DEFAULT_BG_COLOR='#f1f0f1'
+
+    # Resize master window
+    # master.geometry("566x633")
     
     # Defining window style
     try:
@@ -2431,6 +2465,9 @@ def tidePrediction_frame():
 
     global df
     DEFAULT_BG_COLOR='#f1f0f1'
+
+    # Resize master window
+    # master.geometry("566x633")
     
     # Defining window style
     try:
@@ -2448,6 +2485,9 @@ def createwf_frame():
     global df
     DEFAULT_BG_COLOR='#f1f0f1'
 
+    # Resize master window
+    # master.geometry("566x633")
+
     # Defining window style
     try:
         style = call_style()
@@ -2463,6 +2503,9 @@ def createwf_frame():
 def openwf_frame():
     global df
     DEFAULT_BG_COLOR='#f1f0f1'
+
+    # Resize master window
+    # master.geometry("566x633")
     
     # Defining window style
     try:
@@ -2478,11 +2521,11 @@ def openwf_frame():
 # Creating main window (root)
 master = tk.Tk()
 master.title('uniTIDE')
+# master.geometry("566x633")
 master.geometry("843x633")
-# master.maxsize(800,800)
 master.configure(bg='#1c4366')
 # Making unable to resize in Y axis!
-master.resizable(True, 0)
+master.resizable(0, 0)
 
 # Doing the proper Welcome!
 the_welcome(master)
