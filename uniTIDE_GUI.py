@@ -1693,12 +1693,11 @@ def run_residuals(df_obs,df_pre,r_yunits,r_xunits,e_o,dt_interv):
     plt.tight_layout()
     plt.show()
     
-    
-    
+        
     # Plot residual frequency (KDE)
     plt.figure()
 
-    x,y = np.split(df_residuals.h.plot.kde(label='Frequency of Residuals').get_children()[0].get_path().vertices,2,1)
+    x,y = np.split(df_residuals.h.plot.kde().get_children()[0].get_path().vertices,2,1)
 
     text = f"Mean = {np.round(np.mean(y),3)} {units}\nMedian = {np.round(np.median(y),3)} {units}\nMode = {np.round(x[y.argmax()][0],3)} {units}\nStd = {np.round(np.std(y),3)} {units}"
     plt.text(0.65,
@@ -1708,7 +1707,7 @@ def run_residuals(df_obs,df_pre,r_yunits,r_xunits,e_o,dt_interv):
          bbox=dict(facecolor='blue',alpha=0.15,edgecolor='black',boxstyle='round'))
 
 
-    plt.title('Residual distribution',fontweight="bold")
+    plt.title(f'Observed: {file_obs}\nPredicted: {file_pre}', fontweight='bold')
     plt.xlim(np.mean(y)-1*np.std(y),
               np.mean(y)+1*np.std(y))
     plt.fill_between(np.ravel(x), np.ravel(y), 0,
