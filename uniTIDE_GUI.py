@@ -1477,9 +1477,9 @@ def upload_file_residuals(label_sumario,
 
     # Doing global 
     if (obs==True) & (pre==False):
-        global df_obs
+        global df_obs, file_obs
     if (obs==False) & (pre==True):
-        global df_pre
+        global df_pre, file_pre
     
     global file
     
@@ -1587,11 +1587,16 @@ def upload_file_residuals(label_sumario,
     # Separating observed and predicted df's.
     if (obs==True) & (pre==False):
         df_obs = df
+        file_obs = file
     if (obs==False) & (pre==True):
         df_pre = df
+        file_pre = file
 
     return None
 
+
+def run_residuals():
+    return
 
 #_____________________________________________________________________________#
 #_______________________SPECTRAL/HARMONIC ANALYSIS DEFS_______________________#
@@ -2324,8 +2329,143 @@ def residuals_frame():
     b_upload_residuals_PRE.place(relx=.5, y=145,anchor='center')
 
     # Residuals frame
-    frame_res = ttk.LabelFrame(frame, text='Compute Residuals',labelanchor='n')
-    frame_res.place(x=555,y=5,width=267,height=100)
+    frame_residuals = ttk.LabelFrame(frame, text='Compute Residuals',labelanchor='n')
+    frame_residuals.place(x=555,y=5,width=267,height=450)
+
+    # datetime interval
+    frame_dt_interv = tk.LabelFrame(frame_residuals, text='Datetime interval of residuals',labelanchor='n',
+                                   font=('raleway', 10,'bold'),fg='#1c4366')
+    frame_dt_interv.place(x=5,y=5,width=254,height=135) 
+
+    # datetime interval options > radiobuttons
+    # set variable
+    dt_interv = tk.IntVar()
+    dt_interv.set('1')
+    # Observed data interval 
+    r_obs_interv = tk.Radiobutton(frame_dt_interv,text='Observed data interval',variable=dt_interv,value=1)
+    r_obs_interv.place(x=10,y=7)  
+    # Custom interval 
+    r_custom_interv = tk.Radiobutton(frame_dt_interv,text='Custom Interval:',variable=dt_interv,value=2)
+    r_custom_interv.place(x=10,y=27) 
+    l_example = tk.Label(frame_dt_interv,text='(yyyy-mm-dd HH:MM:SS)')
+    l_example.place(x=50,y=45)
+    l_from = tk.Label(frame_dt_interv,text='From')
+    l_from.place(x=25,y=65)
+    e_yyyy = tk.Entry(frame_dt_interv,width=4,state='disabled')
+    e_yyyy.place(x=65,y=66)
+    l_sep1 = tk.Label(frame_dt_interv,text='-')
+    l_sep1.place(x=93,y=65)
+    e_mm = tk.Entry(frame_dt_interv,width=2,state='disabled')
+    e_mm.place(x=103,y=66)
+    l_sep2 = tk.Label(frame_dt_interv,text='-')
+    l_sep2.place(x=117,y=65)    
+    e_dd = tk.Entry(frame_dt_interv,width=2,state='disabled')
+    e_dd.place(x=127,y=66)    
+    e_HH = tk.Entry(frame_dt_interv,width=2,state='disabled')
+    e_HH.place(x=155,y=66)    
+    l_sep3 = tk.Label(frame_dt_interv,text=':')
+    l_sep3.place(x=169,y=65)  
+    e_MM = tk.Entry(frame_dt_interv,width=2,state='disabled')
+    e_MM.place(x=178,y=66)    
+    l_sep4 = tk.Label(frame_dt_interv,text=':')
+    l_sep4.place(x=192,y=65)      
+    e_MM = tk.Entry(frame_dt_interv,width=2,state='disabled')
+    e_MM.place(x=201,y=66)     
+    l_to = tk.Label(frame_dt_interv,text='To')
+    l_to.place(x=25,y=85)
+    e_yyyy2 = tk.Entry(frame_dt_interv,width=4,state='disabled')
+    e_yyyy2.place(x=65,y=86)
+    l_sep5 = tk.Label(frame_dt_interv,text='-')
+    l_sep5.place(x=93,y=85)
+    e_mm2 = tk.Entry(frame_dt_interv,width=2,state='disabled')
+    e_mm2.place(x=103,y=86)
+    l_sep6 = tk.Label(frame_dt_interv,text='-')
+    l_sep6.place(x=117,y=85)    
+    e_dd2 = tk.Entry(frame_dt_interv,width=2,state='disabled')
+    e_dd2.place(x=127,y=86)    
+    e_HH2 = tk.Entry(frame_dt_interv,width=2,state='disabled')
+    e_HH2.place(x=155,y=86)    
+    l_sep7 = tk.Label(frame_dt_interv,text=':')
+    l_sep7.place(x=169,y=85)  
+    e_MM2 = tk.Entry(frame_dt_interv,width=2,state='disabled')
+    e_MM2.place(x=178,y=86)    
+    l_sep8 = tk.Label(frame_dt_interv,text=':')
+    l_sep8.place(x=192,y=85)      
+    e_MM2 = tk.Entry(frame_dt_interv,width=2,state='disabled')
+    e_MM2.place(x=201,y=86)       
+
+    # Residuals plot frame
+    frame_residuals_plot = tk.LabelFrame(frame_residuals, text='Plot options',labelanchor='n',
+                                   font=('raleway', 10,'bold'),fg='#1c4366')
+    frame_residuals_plot.place(x=5,y=155,width=254,height=116) 
+
+    # X-axis Units
+    xunits_frame = tk.LabelFrame(frame_residuals_plot,text='Date Units',labelanchor='n',
+                                 font=('raleway', 9,'bold'),fg='#1c4366')
+    xunits_frame.place(x=3,y=5,height=88,width=120)
+    # Radio buttons for X-axis Units
+    r_xunits = tk.IntVar()
+    r_xunits.set('2')
+    # Julian days 
+    r_julian = tk.Radiobutton(xunits_frame,text='Julian days',variable=r_xunits,value=1,state='disabled')
+    r_julian.place(x=10,y=12)  
+    # Datetime 
+    r_dt = tk.Radiobutton(xunits_frame,text='Datetime',variable=r_xunits,value=2,state='disabled')
+    r_dt.place(x=10,y=32)      
+ 
+    # Y-axis Units
+    yunits_frame = tk.LabelFrame(frame_residuals_plot,text='Height Units',labelanchor='n',
+                                 font=('raleway', 9,'bold'),fg='#1c4366')
+    yunits_frame.place(x=127,y=5,height=88,width=120)   
+    # Radio buttons for Y-axis Units
+    r_yunits = tk.IntVar()
+    r_yunits.set('1')
+    # Meters
+    r_m = tk.Radiobutton(yunits_frame,text='Meters',variable=r_yunits,value=1,state='disabled')
+    r_m.place(x=10,y=2)  
+    # Feets 
+    r_f = tk.Radiobutton(yunits_frame,text='Feets',variable=r_yunits,value=2,state='disabled')
+    r_f.place(x=10,y=22)   
+    # Other height unit
+    r_o = tk.Radiobutton(yunits_frame,text='Other',variable=r_yunits,value=3,state='disabled')
+    r_o.place(x=10,y=42)     
+    # Other Entry
+    e_o = tk.Entry(yunits_frame,width=7,state='disabled')
+    e_o.place(x=70,y=44)
+    
+    # Help RESIDUALS button
+    b_help_residuals = tk.Button(frame_residuals,text='?',font=('Rayleway','16','bold'),
+                            fg='white',bg='#1c4366',command = help_bw_popup)
+    b_help_residuals.place(x=238,y=-7,width=20,height=20) 
+
+    # Button run and plot residuals
+    b_run_residuals= tk.Button(frame_residuals, text='Compute Residuals & Plot', font=('raleway', 10,'bold'),
+                          fg = 'black',width=6,padx=73,pady=4,borderwidth=4,state='disabled',
+                          command = lambda: run_residuals())
+    b_run_residuals.configure(anchor="center")
+    b_run_residuals.place(relx=.5, y=295,anchor='center')   
+
+    # Button save ASCII residuals
+    b_save_residuals= tk.Button(frame_residuals, text='Compute Residuals & Plot', font=('raleway', 10,'bold'),
+                          fg = 'black',width=6,padx=73,pady=4,borderwidth=4,state='disabled',
+                          command = lambda: run_residuals())
+    b_save_residuals.configure(anchor="center")
+    b_save_residuals.place(relx=.5, y=295,anchor='center')  
+
+    # Button export residuals
+    b_export_residuals = tk.Button(frame_residuals, text='Export ASCII', font=('raleway', 10,'bold'),
+                          fg = 'black',width=6,padx=73,pady=4,borderwidth=4,state='disabled',
+                          command = lambda: export_residuals(df_fft,b_export_fft,save_status))
+    b_export_residuals.configure(anchor="center")
+    b_export_residuals.place(relx=.5, y=338,anchor='center')  
+    
+    # Save Status
+    save_status = tk.Label(frame_residuals, text=' ',wraplength=260,width=36,
+                           font=('Rayleway','9',))
+    save_status.configure(anchor="center",bg=DEFAULT_BG_COLOR)
+    save_status.place(x=2,y=358) 
+
+
 
 
 
@@ -2578,12 +2718,34 @@ master.mainloop()
 # resample_pre = df_pre.set_index('date').resample('1T').ffill().reset_index().dropna()
 # df_residuals = (resample_obs-resample_pre).dropna()
 
+# # Defining Y-axis units
+# if r_yunits.get() == 1:
+#     units = 'm'
+# elif r_yunits.get() == 2:
+#     units = 'ft'
+# elif r_yunits.get() == 3:
+#     units = e_o.get()
+
+# # Plot
 # plt.figure(figsize=(12,6))
+# plt.title(f'Observed: {file_obs}\nPredicted: {file_pre}',fontweight="bold")
 # plt.plot(resample_obs.date,resample_obs.h,label='Observed',linewidth=1)
 # plt.plot(resample_pre.date,resample_pre.h,label='Predicted',linewidth=1)
 # plt.plot(resample_obs.date,df_residuals.h,label='residuals',linewidth=1)
 # plt.xlim(resample_obs.date.min(),resample_obs.date.max())
-# plt.legend()
+
+# # Adjusting X-axis depending on units.
+# if r_xunits.get() == 1:
+#     plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%j'))
+#     date_unit = 'Julian Days'
+#     plt.xlabel(date_unit + f' (year(s) = {np.unique(df.date.dt.year)})',fontweight="bold")
+# if r_xunits.get() == 2:
+#     plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d\n%H:%M'))
+#     date_unit = 'Datetime'
+#     plt.xlabel(date_unit,fontweight="bold")
+    
+# plt.ylabel(f'Tide height ({units})',fontweight="bold")
+# plt.legend(facecolor='white',framealpha=0.6,frameon=True,borderpad=1, edgecolor="black")
 # plt.tight_layout()
 # plt.show()
 
