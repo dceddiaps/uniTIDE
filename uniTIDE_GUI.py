@@ -333,7 +333,7 @@ def inpux_box(frame,box_name,x,y):
     
     # Frame input parameters
     lframe_format = tk.LabelFrame(lframe,text='Input Parameters',labelanchor='n',
-                                  font=('raleway', 10,'bold'),fg='black')
+                                  font=('raleway', 10,'bold'),fg='#1c4366')
     lframe_format.place(x=3,y=5,width=257,height=115)
     
     # Skip header rows
@@ -365,8 +365,8 @@ def inpux_box(frame,box_name,x,y):
     e_h_col.place(x=110,y=70)
     
     # Frame Delimiter
-    lframe_delimiter = tk.LabelFrame(lframe,text='Delimiter',labelanchor='n',
-                                  font=('raleway', 9,'bold'),fg='black', padx=10,pady=10)    
+    lframe_delimiter = tk.LabelFrame(lframe,text='Delimiter',labelanchor='n',fg='#1c4366',
+                                  font=('raleway', 9,'bold'), padx=10,pady=10)    
     lframe_delimiter.place(x=150,y=25,width=105,height=75)
     
     # DEMILIMITER OPTIONS
@@ -386,9 +386,7 @@ def inpux_box(frame,box_name,x,y):
     
     # Help input button
     b_help_input = tk.Button(lframe,text='?',font=('Rayleway','16','bold'),
-                             fg='red',
-                             # bg=DEFAULT_BG_COLOR,
-                             bg='#d8d8d8',
+                             fg='white',bg='#1c4366',
                              command = help_input_popup)
     b_help_input.place(x=239,y=-7,width=20,height=20)
 
@@ -399,7 +397,7 @@ def inpux_box(frame,box_name,x,y):
     # Statistics of inputted data
     #filling labels:
     lframe_stat = tk.LabelFrame(lframe,text='Statistics',labelanchor='n',
-                                font=('raleway', 10,'bold'),fg='black')
+                                font=('raleway', 10,'bold'),fg='#1c4366')
     lframe_stat.place(x=3,y=390,height=145,width=257)
     l_stat_hmax = tk.Label(lframe_stat,text='Hmax:')
     l_stat_hmax.place(x=0,y=0)
@@ -455,7 +453,7 @@ def plot_box(frame,x,y):
 
     # X-axis Units
     xunits_frame = tk.LabelFrame(plot_frame,text='Date Units',labelanchor='n',
-                                 font=('raleway', 10,'bold'),fg='black')
+                                 font=('raleway', 10,'bold'),fg='#1c4366')
     xunits_frame.place(x=3,y=5,height=88,width=127)
     # Radio buttons for X-axis Units
     r_xunits = tk.IntVar()
@@ -469,7 +467,7 @@ def plot_box(frame,x,y):
  
     # Y-axis Units
     yunits_frame = tk.LabelFrame(plot_frame,text='Height Units',labelanchor='n',
-                                 font=('raleway', 10,'bold'),fg='black')
+                                 font=('raleway', 10,'bold'),fg='#1c4366')
     yunits_frame.place(x=133,y=5,height=88,width=127)   
     # Radio buttons for Y-axis Units
     r_yunits = tk.IntVar()
@@ -489,7 +487,7 @@ def plot_box(frame,x,y):
 
     # Mean sea level options
     msl_frame = tk.LabelFrame(plot_frame,text='Mean Sea Level',labelanchor='n',
-                              font=('raleway', 10,'bold'),fg='black')
+                              font=('raleway', 10,'bold'),fg='#1c4366')
     msl_frame.place(x=3,y=100,height=70,width=257)
     # Checkboxes for MSL plottong options
     msl_y = tk.IntVar()
@@ -528,7 +526,7 @@ def save_box(frame,x,y):
     
     # Frame resample options
     frame_resamp = tk.LabelFrame(frame_save,text='Resample',labelanchor='n',
-                                 font=('raleway', 10,'bold'))
+                                 font=('raleway', 10,'bold'),fg='#1c4366')
     frame_resamp.place(x=3,y=5,width=257,height=43)
 
     # Resample options
@@ -1198,8 +1196,6 @@ def upload_file_bw(e_fs,
 
 {df}''')    
 
-            
-
 
 def run_bw(df,
            fc,
@@ -1226,10 +1222,6 @@ def run_bw(df,
            r_res_5m,
            r_res_other,
            e_res_other,
-           # r_res,
-           # r_xunits,
-           # r_yunits,
-           # msl_all
            ):
   
     global filtered_bw  
@@ -1270,7 +1262,7 @@ def run_bw(df,
         try:
             w = fc / (e_fs / 2) # Normalize the frequency
             b, a = signal.butter(int(order), w, 'lowpass')
-            filtered_bw = signal.filtfilt(b, a, df.h)
+            filtered_bw = np.round(signal.filtfilt(b, a, df.h),3)
             b_run_bw.config(bg='Light green')
             b_plot_bw['state']='normal'
             b_save['state']='normal'
@@ -1511,7 +1503,7 @@ def upload_file_residuals(label_sumario,
     label_sumario.delete('0.0',tk.END)
 
     # Deleting old dataframe, if it exists.
-    if 'df' in globals():
+    if 'df' in locals():
         del df
     
     # Tring to load data.
@@ -1773,7 +1765,9 @@ def run_fft(df,r_scale,b_export_fft,save_status):
     X_mag = X_mag
     
     # Plot
-    plt.figure(figsize=(12,6)) 
+    plt.style.use('seaborn')
+    plt.figure("uniTIDE - FFT",figsize=(12,6))
+    plt.title(file,fontweight="bold")
     
     # Adjusting X-axis Scale
     if r_scale.get()==1:
@@ -1790,9 +1784,8 @@ def run_fft(df,r_scale,b_export_fft,save_status):
         plt.plot(freq[1:-1],X_mag[1:-1],color='black')
 
     plt.xlabel(scale)
-    plt.ylabel('Mag')
-    plt.grid()
-    
+    plt.axis(xmin=0)
+    plt.ylabel('Magnitude')
     plt.tight_layout()
     plt.show()
     
@@ -2398,7 +2391,7 @@ def fft_frame():
     
     # FFT Scale frame
     frame_fft_scale = tk.LabelFrame(frame_fft,text='X-axis Scale',height=50,width=258,
-                               font=('raleway', 10,'bold'))
+                               font=('raleway', 10,'bold'),fg='#1c4366')
     frame_fft_scale.place(x=3,y=5)
     
     # Scale Options
@@ -2576,3 +2569,34 @@ menubar.add_cascade(label="Workflow",menu=workflow_menu)
 
 
 master.mainloop()
+
+
+
+
+
+# resample_obs = df_obs.set_index('date').resample('1T').ffill().reset_index().dropna()
+# resample_pre = df_pre.set_index('date').resample('1T').ffill().reset_index().dropna()
+# df_residuals = (resample_obs-resample_pre).dropna()
+
+# plt.figure(figsize=(12,6))
+# plt.plot(resample_obs.date,resample_obs.h,label='Observed',linewidth=1)
+# plt.plot(resample_pre.date,resample_pre.h,label='Predicted',linewidth=1)
+# plt.plot(resample_obs.date,df_residuals.h,label='residuals',linewidth=1)
+# plt.xlim(resample_obs.date.min(),resample_obs.date.max())
+# plt.legend()
+# plt.tight_layout()
+# plt.show()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
