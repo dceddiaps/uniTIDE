@@ -12,7 +12,7 @@ from tkinter import filedialog
 from tkinter import Menu
 import pandas as pd
 import numpy as np
-from scipy import signal
+from scipy import signal,stats
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 import datetime as dt
@@ -654,6 +654,20 @@ def plot_plot(file,
     #     plt.show()
      
     return
+
+# Export ASCII
+def export_ascii(df_to_be_exported,button_export,save_status):
+    try:
+        with filedialog.asksaveasfile(mode='w', filetypes = [('Text Document', '*.txt')],
+                                      defaultextension=[".txt"]) as file:
+            df_to_be_exported.to_csv(file.name, header=None, index=None, sep=',', mode='a')
+            button_export.config(bg='Light green')
+        save_status.config(text=f"File is saved in:\n{file.name}")
+    except AttributeError:
+        print("The user cancelled save")
+        button_export.config(bg=DEFAULT_BG_COLOR)
+
+
 
 #_____________________________________________________________________________#
 #________________________________PLOT TIDE DEFS_______________________________#
@@ -1471,6 +1485,16 @@ def upload_file_residuals(label_sumario,
                      l_stat_enddate_val,
                      l_stat_dateinterv_val,
                      l_stat_sf_val,
+                     b_run_residuals,
+                     b_export_residuals,
+                     r_julian,
+                     r_dt,
+                     r_m,
+                     r_f,
+                     r_o,
+                     e_o,
+                     r_obs_interv,
+                     r_custom_interv,
                      obs=False,
                      pre=False
                      ):
@@ -1496,6 +1520,18 @@ def upload_file_residuals(label_sumario,
     l_stat_dateinterv_val['text']=' '
     l_stat_sf_val['text']=' '
 
+    # Disable all buttons
+    b_run_residuals['state']='disabled'
+    b_export_residuals['state']='disabled'
+    r_julian['state']='disabled'
+    r_dt['state']='disabled'
+    r_m['state']='disabled'
+    r_f['state']='disabled'
+    r_o['state']='disabled'
+    e_o['state']='disabled'
+    r_obs_interv['state']='disabled'
+    r_custom_interv['state']='disabled'
+
     # Set browse button color to default
     b_upload_residuals.config(bg=DEFAULT_BG_COLOR)
     
@@ -1503,7 +1539,7 @@ def upload_file_residuals(label_sumario,
     label_sumario.delete('0.0',tk.END)
 
     # Deleting old dataframe, if it exists.
-    if 'df' in locals():
+    if ('df' in locals()) or ('df' in globals()):
         del df
     
     # Tring to load data.
@@ -1557,6 +1593,28 @@ def upload_file_residuals(label_sumario,
         l_stat_dateinterv_val['text']=df.date.max()-df.date.min()
         l_stat_sf_val['text']=f'{np.round(((df.date.max()-df.date.min())/len(df)).total_seconds()/60,1)} minute(s)'
         
+        # Separating observed and predicted df's.
+        if (obs==True) & (pre==False):
+            df_obs = df
+            file_obs = file
+        if (obs==False) & (pre==True):
+            df_pre = df
+            file_pre = file    
+        
+        # Enable plot/export button if the observed and predicted data are uploaded.
+        if (('df_obs' in locals()) or ('df_obs' in globals())) & (('df_pre' in locals()) or ('df_pre' in globals())):
+            b_run_residuals['state']='normal'
+            b_export_residuals['state']='normal'
+            r_julian['state']='normal'
+            r_dt['state']='normal'
+            r_m['state']='normal'
+            r_f['state']='normal'
+            r_o['state']='normal'
+            e_o['state']='normal'
+            r_obs_interv['state']='normal'
+            r_custom_interv['state']='normal'
+        
+        
     except:
                
         # Clear data preview
@@ -1583,20 +1641,145 @@ def upload_file_residuals(label_sumario,
 
 {df}''')    
 
-
-    # Separating observed and predicted df's.
-    if (obs==True) & (pre==False):
-        df_obs = df
-        file_obs = file
-    if (obs==False) & (pre==True):
-        df_pre = df
-        file_pre = file
-
     return None
 
 
-def run_residuals():
+def run_residuals(df_obs,df_pre,r_yunits,r_xunits,e_o,dt_interv):
+    
+    global df_to_export
+    
+    resample_obs = df_obs.set_index('date').resample('1T').ffill().reset_index().dropna()
+    resample_pre = df_pre.set_index('date').resample('1T').ffill().reset_index().dropna()
+    df_residuals = (resample_obs-resample_pre).dropna()
+    
+    # Defining Y-axis units
+    if r_yunits.get() == 1:
+        units = 'm'
+    elif r_yunits.get() == 2:
+        units = 'ft'
+    elif r_yunits.get() == 3:
+        units = e_o.get()
+    
+    # Plot
+    plt.style.use('seaborn')
+    plt.figure(figsize=(12,6))
+    plt.title(f'Observed: {file_obs}\nPredicted: {file_pre}',fontweight="bold")
+    plt.plot(resample_obs.date,resample_obs.h,label='Observed',linewidth=1)
+    plt.plot(resample_pre.date,resample_pre.h,label='Predicted',linewidth=1)
+    if dt_interv.get()==1:
+        plt.plot(resample_obs.date,df_residuals.h,label='Residuals',linewidth=1)
+        df_to_export = pd.concat([resample_obs.date,df_residuals.h],axis=1)
+    elif dt_interv.get()==2:
+        print('poxa')
+        # plt.plot(resample_obs.date,df_residuals.h,label='residuals',linewidth=1)
+        # df_to_export = pd.concat([resample_obs.date,df_residuals.h],axis=1)
+    plt.xlim(resample_obs.date.min(),resample_obs.date.max())
+    
+    # Adjusting X-axis depending on units.
+    if r_xunits.get() == 1:
+        plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%j'))
+        date_unit = 'Julian Days'
+        plt.xlabel(date_unit + f' (year(s) = {np.unique(df_obs.date.dt.year)})',fontweight="bold")
+    if r_xunits.get() == 2:
+        plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d\n%H:%M'))
+        date_unit = 'Datetime'
+        plt.xlabel(date_unit,fontweight="bold")
+    
+    # Creating df for further export in ascii
+    # df_to_be_exported = 
+    
+    plt.ylabel(f'Tide height ({units})',fontweight="bold")
+    plt.legend(facecolor='white',framealpha=0.6,frameon=True,borderpad=1, edgecolor="black")
+    plt.tight_layout()
+    plt.show()
+    
+    
+    
+    # Plot residual frequency (KDE)
+    plt.figure()
+
+    x,y = np.split(df_residuals.h.plot.kde(label='Frequency of Residuals').get_children()[0].get_path().vertices,2,1)
+
+    text = f"Mean = {np.round(np.mean(y),3)} {units}\nMedian = {np.round(np.median(y),3)} {units}\nMode = {np.round(x[y.argmax()][0],3)} {units}\nStd = {np.round(np.std(y),3)} {units}"
+    plt.text(0.65,
+         0.75,
+         text,
+         transform=plt.gca().transAxes,
+         bbox=dict(facecolor='blue',alpha=0.15,edgecolor='black',boxstyle='round'))
+
+
+    plt.title('Residual distribution',fontweight="bold")
+    plt.xlim(np.mean(y)-1*np.std(y),
+              np.mean(y)+1*np.std(y))
+    plt.fill_between(np.ravel(x), np.ravel(y), 0,
+                      # facecolor="orange", # The fill color
+                      color='blue',       # The outline color
+                      alpha=0.2)  
+    plt.ylabel('Density (KDE)',fontweight="bold")
+    plt.xlabel(f'Residual $(Observed - Predicted)$ ({units})',fontweight="bold")
+    plt.show()
+
+    
     return
+
+
+def obs_interv_radio(e_yyyy,
+                     e_mm,
+                     e_dd,
+                     e_HH,
+                     e_MM,
+                     e_SS,
+                     e_yyyy2,
+                     e_mm2,
+                     e_dd2,
+                     e_HH2,
+                     e_MM2,
+                     e_SS2):
+
+    e_yyyy['state']='disabled'
+    e_mm['state']='disabled'
+    e_dd['state']='disabled'
+    e_HH['state']='disabled'   
+    e_MM['state']='disabled'     
+    e_SS['state']='disabled'
+    e_yyyy2['state']='disabled'
+    e_mm2['state']='disabled' 
+    e_dd2['state']='disabled' 
+    e_HH2['state']='disabled'  
+    e_MM2['state']='disabled'     
+    e_SS2['state']='disabled'
+
+    return
+
+
+def custom_interv_radio(e_yyyy,
+                     e_mm,
+                     e_dd,
+                     e_HH,
+                     e_MM,
+                     e_SS,
+                     e_yyyy2,
+                     e_mm2,
+                     e_dd2,
+                     e_HH2,
+                     e_MM2,
+                     e_SS2):
+
+    e_yyyy['state']='normal'
+    e_mm['state']='normal'
+    e_dd['state']='normal'
+    e_HH['state']='normal'   
+    e_MM['state']='normal'    
+    e_MM['state']='normal'
+    e_yyyy2['state']='normal'
+    e_mm2['state']='normal'
+    e_dd2['state']='normal' 
+    e_HH2['state']='normal' 
+    e_MM2['state']='normal'   
+    e_SS2['state']='normal'
+    
+    return
+
 
 #_____________________________________________________________________________#
 #_______________________SPECTRAL/HARMONIC ANALYSIS DEFS_______________________#
@@ -1799,17 +1982,6 @@ def run_fft(df,r_scale,b_export_fft,save_status):
     return
 
 
-def export_fft(df_fft,b_export_fft,save_status):
-    try:
-        with filedialog.asksaveasfile(mode='w', filetypes = [('Text Document', '*.txt')],
-                                      defaultextension=[".txt"]) as file:
-            df_fft.to_csv(file.name, header=None, index=None, sep=',', mode='a')
-            b_export_fft.config(bg='Light green')
-        save_status.config(text=f"File is saved in:\n{file.name}")
-    except AttributeError:
-        print("The user cancelled save")
-        b_export_fft.config(bg=DEFAULT_BG_COLOR)
-
 
 '''_________________________________________________________________________'''
 '''___________________________________FRAMES________________________________'''
@@ -1921,6 +2093,7 @@ def plot_frame():
     b_plot_plot['state'] = tk.DISABLED
 
 
+
 def compare_frame():
 
     global df
@@ -1938,6 +2111,7 @@ def compare_frame():
     # Creating base frame
     title = 'Compare Tides'
     frame = base_layer(DEFAULT_BG_COLOR,title,master,frame_responsive_width=551)
+
 
 
 def qc_frame():
@@ -2253,8 +2427,8 @@ def residuals_frame():
     global df
     DEFAULT_BG_COLOR='#f1f0f1'
 
-    # Resize master window
-    # master.geometry("843x633")
+    # Resize master window in case user changed the size
+    master.geometry("843x633")
 
     # Defining window style
     try:
@@ -2297,6 +2471,16 @@ def residuals_frame():
                                                       l_stat_enddate_val=l_stat_enddate_val,
                                                       l_stat_dateinterv_val=l_stat_dateinterv_val,
                                                       l_stat_sf_val=l_stat_sf_val,
+                                                      b_run_residuals=b_run_residuals,
+                                                      b_export_residuals=b_export_residuals,
+                                                      r_julian=r_julian,
+                                                      r_dt=r_dt,
+                                                      r_m=r_m,
+                                                      r_f=r_f,
+                                                      r_o=r_o,
+                                                      e_o=e_o,
+                                                      r_obs_interv=r_obs_interv,
+                                                      r_custom_interv=r_custom_interv,
                                                       obs = True,
                                                       pre = False
                                                       ))
@@ -2322,8 +2506,19 @@ def residuals_frame():
                                                       l_stat_enddate_val=l_stat_enddate_val2,
                                                       l_stat_dateinterv_val=l_stat_dateinterv_val2,
                                                       l_stat_sf_val=l_stat_sf_val2,
+                                                      b_run_residuals=b_run_residuals,
+                                                      b_export_residuals=b_export_residuals,
+                                                      r_julian =r_julian ,
+                                                      r_dt=r_dt,
+                                                      r_m=r_m,
+                                                      r_f=r_f,
+                                                      r_o=r_o,
+                                                      e_o=e_o,
+                                                      r_obs_interv=r_obs_interv,
+                                                      r_custom_interv=r_custom_interv,
                                                       obs = False,
-                                                      pre = True
+                                                      pre = True,
+                                                      
                                                       ))
     b_upload_residuals_PRE.configure(anchor="center")
     b_upload_residuals_PRE.place(relx=.5, y=145,anchor='center')
@@ -2342,10 +2537,36 @@ def residuals_frame():
     dt_interv = tk.IntVar()
     dt_interv.set('1')
     # Observed data interval 
-    r_obs_interv = tk.Radiobutton(frame_dt_interv,text='Observed data interval',variable=dt_interv,value=1)
+    r_obs_interv = tk.Radiobutton(frame_dt_interv,text='Observed data interval',
+                                  variable=dt_interv,value=1,state='disabled',
+                                  command = lambda: obs_interv_radio(e_yyyy,
+                                                                     e_mm,
+                                                                     e_dd,
+                                                                     e_HH,
+                                                                     e_MM,
+                                                                     e_SS,
+                                                                     e_yyyy2,
+                                                                     e_mm2,
+                                                                     e_dd2,
+                                                                     e_HH2,
+                                                                     e_MM2,
+                                                                     e_SS2))
     r_obs_interv.place(x=10,y=7)  
     # Custom interval 
-    r_custom_interv = tk.Radiobutton(frame_dt_interv,text='Custom Interval:',variable=dt_interv,value=2)
+    r_custom_interv = tk.Radiobutton(frame_dt_interv,text='Custom Interval:',
+                                     variable=dt_interv,value=2,state='disabled',
+                                     command = lambda: custom_interv_radio(e_yyyy,
+                                                                           e_mm,
+                                                                           e_dd,
+                                                                           e_HH,
+                                                                           e_MM,
+                                                                           e_SS,
+                                                                           e_yyyy2,
+                                                                           e_mm2,
+                                                                           e_dd2,
+                                                                           e_HH2,
+                                                                           e_MM2,
+                                                                           e_SS2))
     r_custom_interv.place(x=10,y=27) 
     l_example = tk.Label(frame_dt_interv,text='(yyyy-mm-dd HH:MM:SS)')
     l_example.place(x=50,y=45)
@@ -2369,8 +2590,8 @@ def residuals_frame():
     e_MM.place(x=178,y=66)    
     l_sep4 = tk.Label(frame_dt_interv,text=':')
     l_sep4.place(x=192,y=65)      
-    e_MM = tk.Entry(frame_dt_interv,width=2,state='disabled')
-    e_MM.place(x=201,y=66)     
+    e_SS = tk.Entry(frame_dt_interv,width=2,state='disabled')
+    e_SS.place(x=201,y=66)     
     l_to = tk.Label(frame_dt_interv,text='To')
     l_to.place(x=25,y=85)
     e_yyyy2 = tk.Entry(frame_dt_interv,width=4,state='disabled')
@@ -2391,8 +2612,8 @@ def residuals_frame():
     e_MM2.place(x=178,y=86)    
     l_sep8 = tk.Label(frame_dt_interv,text=':')
     l_sep8.place(x=192,y=85)      
-    e_MM2 = tk.Entry(frame_dt_interv,width=2,state='disabled')
-    e_MM2.place(x=201,y=86)       
+    e_SS2 = tk.Entry(frame_dt_interv,width=2,state='disabled')
+    e_SS2.place(x=201,y=86)       
 
     # Residuals plot frame
     frame_residuals_plot = tk.LabelFrame(frame_residuals, text='Plot options',labelanchor='n',
@@ -2441,21 +2662,21 @@ def residuals_frame():
     # Button run and plot residuals
     b_run_residuals= tk.Button(frame_residuals, text='Compute Residuals & Plot', font=('raleway', 10,'bold'),
                           fg = 'black',width=6,padx=73,pady=4,borderwidth=4,state='disabled',
-                          command = lambda: run_residuals())
+                          command = lambda: run_residuals(df_obs=df_obs,
+                                                          df_pre=df_pre,
+                                                          r_yunits=r_yunits,
+                                                          r_xunits=r_xunits,
+                                                          e_o=e_o,
+                                                          dt_interv=dt_interv))
     b_run_residuals.configure(anchor="center")
     b_run_residuals.place(relx=.5, y=295,anchor='center')   
 
-    # Button save ASCII residuals
-    b_save_residuals= tk.Button(frame_residuals, text='Compute Residuals & Plot', font=('raleway', 10,'bold'),
-                          fg = 'black',width=6,padx=73,pady=4,borderwidth=4,state='disabled',
-                          command = lambda: run_residuals())
-    b_save_residuals.configure(anchor="center")
-    b_save_residuals.place(relx=.5, y=295,anchor='center')  
-
-    # Button export residuals
+    # Button export residuals ASCII
     b_export_residuals = tk.Button(frame_residuals, text='Export ASCII', font=('raleway', 10,'bold'),
                           fg = 'black',width=6,padx=73,pady=4,borderwidth=4,state='disabled',
-                          command = lambda: export_residuals(df_fft,b_export_fft,save_status))
+                          command = lambda: export_ascii(df_to_be_exported=df_to_be_exported,
+                                                         button_export=b_export_residuals,
+                                                         save_status=save_status))
     b_export_residuals.configure(anchor="center")
     b_export_residuals.place(relx=.5, y=338,anchor='center')  
     
@@ -2464,8 +2685,6 @@ def residuals_frame():
                            font=('Rayleway','9',))
     save_status.configure(anchor="center",bg=DEFAULT_BG_COLOR)
     save_status.place(x=2,y=358) 
-
-
 
 
 
@@ -2557,7 +2776,9 @@ def fft_frame():
     # Button export FFT
     b_export_fft = tk.Button(frame_fft, text='Export ASCII', font=('raleway', 10,'bold'),
                           fg = 'black',width=6,padx=73,pady=4,borderwidth=4,state='disabled',
-                          command = lambda: export_fft(df_fft,b_export_fft,save_status))
+                          command = lambda: export_ascii(df_to_be_exported=df_fft,
+                                                         button_export=b_export_fft,
+                                                         save_status=save_status))
     b_export_fft.configure(anchor="center")
     b_export_fft.place(relx=.5, y=120,anchor='center')  
     
@@ -2658,7 +2879,7 @@ master.title('uniTIDE')
 master.geometry("843x633")
 master.configure(bg='#1c4366')
 # Making unable to resize in Y axis!
-master.resizable(0, 0)
+master.resizable(True, 0)
 
 # Doing the proper Welcome!
 the_welcome(master)
@@ -2709,56 +2930,6 @@ menubar.add_cascade(label="Workflow",menu=workflow_menu)
 
 
 master.mainloop()
-
-
-
-
-
-# resample_obs = df_obs.set_index('date').resample('1T').ffill().reset_index().dropna()
-# resample_pre = df_pre.set_index('date').resample('1T').ffill().reset_index().dropna()
-# df_residuals = (resample_obs-resample_pre).dropna()
-
-# # Defining Y-axis units
-# if r_yunits.get() == 1:
-#     units = 'm'
-# elif r_yunits.get() == 2:
-#     units = 'ft'
-# elif r_yunits.get() == 3:
-#     units = e_o.get()
-
-# # Plot
-# plt.figure(figsize=(12,6))
-# plt.title(f'Observed: {file_obs}\nPredicted: {file_pre}',fontweight="bold")
-# plt.plot(resample_obs.date,resample_obs.h,label='Observed',linewidth=1)
-# plt.plot(resample_pre.date,resample_pre.h,label='Predicted',linewidth=1)
-# plt.plot(resample_obs.date,df_residuals.h,label='residuals',linewidth=1)
-# plt.xlim(resample_obs.date.min(),resample_obs.date.max())
-
-# # Adjusting X-axis depending on units.
-# if r_xunits.get() == 1:
-#     plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%j'))
-#     date_unit = 'Julian Days'
-#     plt.xlabel(date_unit + f' (year(s) = {np.unique(df.date.dt.year)})',fontweight="bold")
-# if r_xunits.get() == 2:
-#     plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d\n%H:%M'))
-#     date_unit = 'Datetime'
-#     plt.xlabel(date_unit,fontweight="bold")
-    
-# plt.ylabel(f'Tide height ({units})',fontweight="bold")
-# plt.legend(facecolor='white',framealpha=0.6,frameon=True,borderpad=1, edgecolor="black")
-# plt.tight_layout()
-# plt.show()
-
-
-
-
-
-
-
-
-
-
-
 
 
 
