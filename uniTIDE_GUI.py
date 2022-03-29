@@ -1531,6 +1531,7 @@ def upload_file_residuals(label_sumario,
     e_o['state']='disabled'
     r_obs_interv['state']='disabled'
     r_custom_interv['state']='disabled'
+    b_export_residuals['state']='disabled'
 
     # Set browse button color to default
     b_upload_residuals.config(bg=DEFAULT_BG_COLOR)
@@ -1604,7 +1605,6 @@ def upload_file_residuals(label_sumario,
         # Enable plot/export button if the observed and predicted data are uploaded.
         if (('df_obs' in locals()) or ('df_obs' in globals())) & (('df_pre' in locals()) or ('df_pre' in globals())):
             b_run_residuals['state']='normal'
-            b_export_residuals['state']='normal'
             r_julian['state']='normal'
             r_dt['state']='normal'
             r_m['state']='normal'
@@ -1644,13 +1644,14 @@ def upload_file_residuals(label_sumario,
     return None
 
 
-def run_residuals(df_obs,df_pre,r_yunits,r_xunits,e_o,dt_interv):
+def run_residuals(df_obs,df_pre,r_yunits,r_xunits,e_o,dt_interv,b_export_residuals):
     
     global df_to_export
     
     resample_obs = df_obs.set_index('date').resample('1T').ffill().reset_index().dropna()
     resample_pre = df_pre.set_index('date').resample('1T').ffill().reset_index().dropna()
     df_residuals = (resample_obs-resample_pre).dropna()
+    df_residuals.h = np.round(df_residuals.h,3)
     
     # Defining Y-axis units
     if r_yunits.get() == 1:
@@ -1662,7 +1663,7 @@ def run_residuals(df_obs,df_pre,r_yunits,r_xunits,e_o,dt_interv):
     
     # Plot
     plt.style.use('seaborn')
-    plt.figure(figsize=(12,6))
+    plt.figure('uniTIDE plot - Observed, Predicted and Residuals',figsize=(12,6))
     plt.title(f'Observed: {file_obs}\nPredicted: {file_pre}',fontweight="bold")
     plt.plot(resample_obs.date,resample_obs.h,label='Observed',linewidth=1)
     plt.plot(resample_pre.date,resample_pre.h,label='Predicted',linewidth=1)
@@ -1685,9 +1686,6 @@ def run_residuals(df_obs,df_pre,r_yunits,r_xunits,e_o,dt_interv):
         date_unit = 'Datetime'
         plt.xlabel(date_unit,fontweight="bold")
     
-    # Creating df for further export in ascii
-    # df_to_be_exported = 
-    
     plt.ylabel(f'Tide height ({units})',fontweight="bold")
     plt.legend(facecolor='white',framealpha=0.6,frameon=True,borderpad=1, edgecolor="black")
     plt.tight_layout()
@@ -1695,7 +1693,7 @@ def run_residuals(df_obs,df_pre,r_yunits,r_xunits,e_o,dt_interv):
     
         
     # Plot residual frequency (KDE)
-    plt.figure()
+    plt.figure('uniTIDE plot - Residuals distribution')
 
     x,y = np.split(df_residuals.h.plot.kde().get_children()[0].get_path().vertices,2,1)
 
@@ -1718,7 +1716,9 @@ def run_residuals(df_obs,df_pre,r_yunits,r_xunits,e_o,dt_interv):
     plt.xlabel(f'Residual $(Observed - Predicted)$ ({units})',fontweight="bold")
     plt.show()
 
-    
+    # Enabling to save residuals as ASCII file    
+    b_export_residuals['state'] = 'normal'
+
     return
 
 
@@ -2666,14 +2666,16 @@ def residuals_frame():
                                                           r_yunits=r_yunits,
                                                           r_xunits=r_xunits,
                                                           e_o=e_o,
-                                                          dt_interv=dt_interv))
+                                                          dt_interv=dt_interv,
+                                                          b_export_residuals=b_export_residuals,
+                                                          ))
     b_run_residuals.configure(anchor="center")
     b_run_residuals.place(relx=.5, y=295,anchor='center')   
 
     # Button export residuals ASCII
     b_export_residuals = tk.Button(frame_residuals, text='Export ASCII', font=('raleway', 10,'bold'),
                           fg = 'black',width=6,padx=73,pady=4,borderwidth=4,state='disabled',
-                          command = lambda: export_ascii(df_to_be_exported=df_to_be_exported,
+                          command = lambda: export_ascii(df_to_be_exported=df_to_export,
                                                          button_export=b_export_residuals,
                                                          save_status=save_status))
     b_export_residuals.configure(anchor="center")
