@@ -667,6 +667,69 @@ def export_ascii(df_to_be_exported,button_export,save_status):
         print("The user cancelled save")
         button_export.config(bg=DEFAULT_BG_COLOR)
 
+# Run Fast Fourier Transform
+def run_fft(df,r_scale,b_export_fft,save_status,b_run_fft):
+    
+    global df_fft
+    
+    b_export_fft['state']='disabled'
+    b_export_fft.config(bg=DEFAULT_BG_COLOR)
+    save_status.config(text=' ')
+    
+    sample_freq = (df.date[1] - df.date[0]).total_seconds() # in seconds
+    n_samples = len(df)
+    
+    # Applying FFT
+    X = np.fft.fft(df.h)
+    X[0] = 0
+    freq = np.fft.fftfreq(len(X),d=sample_freq)
+    X_mag = np.abs(X)
+    X_mag = X_mag/(X_mag.max())
+    if n_samples%2 != 0:
+        freq = freq[0:int(n_samples/2+1)]
+        X_mag = X_mag[0:int(n_samples/2+1)]
+    else:
+        freq = freq[0:int(n_samples/2)]
+        X_mag = X_mag[0:int(n_samples/2)]
+
+    # Plot
+    plt.style.use('seaborn')
+    plt.figure("uniTIDE - FFT",figsize=(12,6))
+    plt.title(file,fontweight="bold")
+    
+    
+    # Adjusting X-axis Scale
+    t = (1/freq[1:])
+    if r_scale.get()==1:
+        scale='Hours'
+        plt.xscale('log')
+        # X_mag = X_mag[::-1]
+        df_fft = pd.concat([pd.DataFrame(t/3600),pd.DataFrame(X_mag[1:])],axis=1)
+        plt.plot(t/3600,X_mag[1:],color='black') #Avoid division by zero at frequency = 0 Hz
+        # plt.xlim(480,0)
+    if r_scale.get()==2:
+        scale='Days'
+        plt.xscale('log')
+        # X_mag = X_mag[::-1]
+        df_fft = pd.concat([pd.DataFrame(t/(3600*24)),pd.DataFrame(X_mag[1:])],axis=1)
+        plt.plot(t/(3600*24),X_mag[1:],color='black') #Avoid division by zero at frequency = 0 Hz
+        # plt.xlim(20,0)
+    if r_scale.get()==3:
+        scale='Hz'
+        df_fft = pd.concat([pd.DataFrame(freq[1:]),pd.DataFrame(X_mag[1:])],axis=1)
+        plt.plot(freq[1:],X_mag[1:],color='black')
+
+    plt.xlabel(scale)
+    # plt.axis(xmin=0)
+    plt.ylabel('Magnitude')
+    plt.tight_layout()
+    plt.show()
+    
+    b_export_fft['state']='normal'
+    b_run_fft.config(bg='light green')
+    
+    return
+
 
 
 #_____________________________________________________________________________#
@@ -1493,8 +1556,13 @@ def upload_file_residuals(label_sumario,
                      r_f,
                      r_o,
                      e_o,
-                     r_obs_interv,
-                     r_custom_interv,
+                     r_hours,
+                     r_days,
+                     r_hz,
+                     b_export_residuals_fft,
+                     b_run_residuals_fft,
+                     save_status,
+                     save_status_fft,
                      obs=False,
                      pre=False
                      ):
@@ -1529,19 +1597,29 @@ def upload_file_residuals(label_sumario,
     r_f['state']='disabled'
     r_o['state']='disabled'
     e_o['state']='disabled'
-    r_obs_interv['state']='disabled'
-    r_custom_interv['state']='disabled'
-    b_export_residuals['state']='disabled'
-
-    # Set browse button color to default
+    r_hours['state']='disabled'
+    r_days['state']='disabled'
+    r_hz['state']='disabled'
+    b_export_residuals_fft['state']='disabled'
+    b_run_residuals_fft['state']='disabled'
+    save_status['text']=' '
+    save_status_fft['text']=' '
+    b_export_residuals.config(bg=DEFAULT_BG_COLOR)
+    b_export_residuals_fft.config(bg=DEFAULT_BG_COLOR)
+    b_run_residuals.config(bg=DEFAULT_BG_COLOR)
     b_upload_residuals.config(bg=DEFAULT_BG_COLOR)
+    b_run_residuals_fft.config(bg=DEFAULT_BG_COLOR)
     
     # Delete any data preview information
     label_sumario.delete('0.0',tk.END)
 
     # Deleting old dataframe, if it exists.
-    if ('df' in locals()) or ('df' in globals()):
+    # if ('df' in locals()) or ('df' in globals()):
+    #     del df
+    try:
         del df
+    except:
+        pass
     
     # Tring to load data.
     try:
@@ -1611,8 +1689,6 @@ def upload_file_residuals(label_sumario,
             r_f['state']='normal'
             r_o['state']='normal'
             e_o['state']='normal'
-            r_obs_interv['state']='normal'
-            r_custom_interv['state']='normal'
         
         
     except:
@@ -1644,9 +1720,29 @@ def upload_file_residuals(label_sumario,
     return None
 
 
-def run_residuals(df_obs,df_pre,r_yunits,r_xunits,e_o,dt_interv,b_export_residuals):
+def run_residuals(df_obs,
+                  df_pre,
+                  r_yunits,
+                  r_xunits,
+                  e_o,
+                  b_export_residuals,
+                  b_export_residuals_fft,
+                  b_run_residuals_fft,
+                  r_hours,
+                  r_days,
+                  r_hz,
+                  b_run_residuals,
+                  save_status,
+                  save_status_fft,):
     
     global df_to_export
+    
+    b_run_residuals_fft.config(bg=DEFAULT_BG_COLOR)
+    save_status['text']=' '
+    save_status_fft['text']=' '
+    b_export_residuals.config(bg=DEFAULT_BG_COLOR)
+    b_export_residuals_fft.config(bg=DEFAULT_BG_COLOR)
+    b_export_residuals_fft['state']='disabled'
     
     resample_obs = df_obs.set_index('date').resample('1T').ffill().reset_index().dropna()
     resample_pre = df_pre.set_index('date').resample('1T').ffill().reset_index().dropna()
@@ -1663,17 +1759,11 @@ def run_residuals(df_obs,df_pre,r_yunits,r_xunits,e_o,dt_interv,b_export_residua
     
     # Plot
     plt.style.use('seaborn')
-    plt.figure('uniTIDE plot - Observed, Predicted and Residuals',figsize=(12,6))
-    plt.title(f'Observed: {file_obs}\nPredicted: {file_pre}',fontweight="bold")
+    plt.figure('uniTIDE - Observed, Predicted and Residuals',figsize=(12,6))
+    plt.title(f'$Observed$: {file_obs}\n$Predicted$: {file_pre}',fontweight='bold')
     plt.plot(resample_obs.date,resample_obs.h,label='Observed',linewidth=1)
     plt.plot(resample_pre.date,resample_pre.h,label='Predicted',linewidth=1)
-    if dt_interv.get()==1:
-        plt.plot(resample_obs.date,df_residuals.h,label='Residuals',linewidth=1)
-        df_to_export = pd.concat([resample_obs.date,df_residuals.h],axis=1)
-    elif dt_interv.get()==2:
-        print('poxa')
-        # plt.plot(resample_obs.date,df_residuals.h,label='residuals',linewidth=1)
-        # df_to_export = pd.concat([resample_obs.date,df_residuals.h],axis=1)
+    plt.plot(resample_obs.date,df_residuals.h,label='Residuals',linewidth=1)
     plt.xlim(resample_obs.date.min(),resample_obs.date.max())
     
     # Adjusting X-axis depending on units.
@@ -1693,7 +1783,7 @@ def run_residuals(df_obs,df_pre,r_yunits,r_xunits,e_o,dt_interv,b_export_residua
     
         
     # Plot residual frequency (KDE)
-    plt.figure('uniTIDE plot - Residuals distribution')
+    plt.figure('uniTIDE - Residuals distribution')
 
     x,y = np.split(df_residuals.h.plot.kde().get_children()[0].get_path().vertices,2,1)
 
@@ -1705,7 +1795,7 @@ def run_residuals(df_obs,df_pre,r_yunits,r_xunits,e_o,dt_interv,b_export_residua
          bbox=dict(facecolor='blue',alpha=0.15,edgecolor='black',boxstyle='round'))
 
 
-    plt.title(f'Observed: {file_obs}\nPredicted: {file_pre}', fontweight='bold')
+    plt.title(f'$Observed$: {file_obs}\n$Predicted$: {file_pre}',fontweight='bold')
     plt.xlim(np.mean(y)-1*np.std(y),
               np.mean(y)+1*np.std(y))
     plt.fill_between(np.ravel(x), np.ravel(y), 0,
@@ -1716,68 +1806,21 @@ def run_residuals(df_obs,df_pre,r_yunits,r_xunits,e_o,dt_interv,b_export_residua
     plt.xlabel(f'Residual $(Observed - Predicted)$ ({units})',fontweight="bold")
     plt.show()
 
-    # Enabling to save residuals as ASCII file    
+    # Creating df for export
+    df_to_export = pd.concat([resample_obs.date,df_residuals.h],axis=1)
+
+    # Enabling buttons   
     b_export_residuals['state'] = 'normal'
-
-    return
-
-
-def obs_interv_radio(e_yyyy,
-                     e_mm,
-                     e_dd,
-                     e_HH,
-                     e_MM,
-                     e_SS,
-                     e_yyyy2,
-                     e_mm2,
-                     e_dd2,
-                     e_HH2,
-                     e_MM2,
-                     e_SS2):
-
-    e_yyyy['state']='disabled'
-    e_mm['state']='disabled'
-    e_dd['state']='disabled'
-    e_HH['state']='disabled'   
-    e_MM['state']='disabled'     
-    e_SS['state']='disabled'
-    e_yyyy2['state']='disabled'
-    e_mm2['state']='disabled' 
-    e_dd2['state']='disabled' 
-    e_HH2['state']='disabled'  
-    e_MM2['state']='disabled'     
-    e_SS2['state']='disabled'
-
-    return
-
-
-def custom_interv_radio(e_yyyy,
-                     e_mm,
-                     e_dd,
-                     e_HH,
-                     e_MM,
-                     e_SS,
-                     e_yyyy2,
-                     e_mm2,
-                     e_dd2,
-                     e_HH2,
-                     e_MM2,
-                     e_SS2):
-
-    e_yyyy['state']='normal'
-    e_mm['state']='normal'
-    e_dd['state']='normal'
-    e_HH['state']='normal'   
-    e_MM['state']='normal'    
-    e_MM['state']='normal'
-    e_yyyy2['state']='normal'
-    e_mm2['state']='normal'
-    e_dd2['state']='normal' 
-    e_HH2['state']='normal' 
-    e_MM2['state']='normal'   
-    e_SS2['state']='normal'
+    b_run_residuals_fft['state'] = 'normal'
+    r_hours['state'] = 'normal'
+    r_days['state'] = 'normal'
+    r_hz['state'] = 'normal'
     
+    b_run_residuals.config(bg='light green')
+    
+
     return
+
 
 
 #_____________________________________________________________________________#
@@ -1805,7 +1848,7 @@ def upload_file_fft(label_sumario,
                      r_days,
                      r_hz,
                      b_export_fft,
-                     save_status
+                     save_status,
                      ):
 
     global df,file
@@ -1831,6 +1874,7 @@ def upload_file_fft(label_sumario,
     r_hz['state'] = 'disabled'
     b_export_fft['state'] = 'disabled'
     b_export_fft.config(bg=DEFAULT_BG_COLOR)
+    b_run_fft.config(bg=DEFAULT_BG_COLOR)
 
     # Set browse button color to default
     b_upload_fft.config(bg=DEFAULT_BG_COLOR)
@@ -1926,59 +1970,6 @@ def upload_file_fft(label_sumario,
 {df}''')    
 
     return None
-
-
-def run_fft(df,r_scale,b_export_fft,save_status):
-    
-    global df_fft
-    
-    b_export_fft['state']='disabled'
-    b_export_fft.config(bg=DEFAULT_BG_COLOR)
-    save_status.config(text=' ')
-    
-    sample_freq = (df.date[1] - df.date[0]).total_seconds() # in seconds
-    n_samples = len(df)
-    
-    # Applying FFT
-    X = np.fft.fft(df.h)
-    X[0] = 0
-    freq = np.fft.fftfreq(len(X),d=sample_freq)
-    freq = freq[0:int(n_samples/2+1)]
-    X_mag = np.abs(X)
-    X_mag = X_mag/(X_mag.max())
-    
-    # Adjusting for plotting
-    X_mag = X_mag[0:int(n_samples/2+1)]
-    X_mag = X_mag
-    
-    # Plot
-    plt.style.use('seaborn')
-    plt.figure("uniTIDE - FFT",figsize=(12,6))
-    plt.title(file,fontweight="bold")
-    
-    # Adjusting X-axis Scale
-    if r_scale.get()==1:
-        scale='Hours'
-        df_fft = pd.concat([pd.DataFrame((1/freq[1:-1])/(3600)),pd.DataFrame(X_mag[1:-1])],axis=1)
-        plt.plot((1/freq[1:-1])/(3600),X_mag[1:-1],color='black') #Avoid division by zero at frequency = 0 Hz
-    if r_scale.get()==2:
-        scale='Days'
-        df_fft = pd.concat([pd.DataFrame((1/freq[1:-1])/(3600*24)),pd.DataFrame(X_mag[1:-1])],axis=1)
-        plt.plot((1/freq[1:-1])/(3600*24),X_mag[1:-1],color='black') #Avoid division by zero at frequency = 0 Hz
-    if r_scale.get()==3:
-        scale='Hz'
-        df_fft = pd.concat([pd.DataFrame(freq[1:-1]),pd.DataFrame(X_mag[1:-1])],axis=1)
-        plt.plot(freq[1:-1],X_mag[1:-1],color='black')
-
-    plt.xlabel(scale)
-    plt.axis(xmin=0)
-    plt.ylabel('Magnitude')
-    plt.tight_layout()
-    plt.show()
-    
-    b_export_fft['state']='normal'
-    
-    return
 
 
 
@@ -2478,8 +2469,13 @@ def residuals_frame():
                                                       r_f=r_f,
                                                       r_o=r_o,
                                                       e_o=e_o,
-                                                      r_obs_interv=r_obs_interv,
-                                                      r_custom_interv=r_custom_interv,
+                                                      r_hours=r_hours,
+                                                      r_days=r_days,
+                                                      r_hz=r_hz,
+                                                      b_export_residuals_fft=b_export_residuals_fft,
+                                                      b_run_residuals_fft=b_run_residuals_fft,
+                                                      save_status=save_status,
+                                                      save_status_fft=save_status_fft,
                                                       obs = True,
                                                       pre = False
                                                       ))
@@ -2513,8 +2509,13 @@ def residuals_frame():
                                                       r_f=r_f,
                                                       r_o=r_o,
                                                       e_o=e_o,
-                                                      r_obs_interv=r_obs_interv,
-                                                      r_custom_interv=r_custom_interv,
+                                                      r_hours=r_hours,
+                                                      r_days=r_days,
+                                                      r_hz=r_hz,
+                                                      b_export_residuals_fft=b_export_residuals_fft,
+                                                      b_run_residuals_fft=b_run_residuals_fft,
+                                                      save_status=save_status,
+                                                      save_status_fft=save_status_fft,
                                                       obs = False,
                                                       pre = True,
                                                       
@@ -2524,100 +2525,12 @@ def residuals_frame():
 
     # Residuals frame
     frame_residuals = ttk.LabelFrame(frame, text='Compute Residuals',labelanchor='n')
-    frame_residuals.place(x=555,y=5,width=267,height=450)
-
-    # datetime interval
-    frame_dt_interv = tk.LabelFrame(frame_residuals, text='Datetime interval of residuals',labelanchor='n',
-                                   font=('raleway', 10,'bold'),fg='#1c4366')
-    frame_dt_interv.place(x=5,y=5,width=254,height=135) 
-
-    # datetime interval options > radiobuttons
-    # set variable
-    dt_interv = tk.IntVar()
-    dt_interv.set('1')
-    # Observed data interval 
-    r_obs_interv = tk.Radiobutton(frame_dt_interv,text='Observed data interval',
-                                  variable=dt_interv,value=1,state='disabled',
-                                  command = lambda: obs_interv_radio(e_yyyy,
-                                                                     e_mm,
-                                                                     e_dd,
-                                                                     e_HH,
-                                                                     e_MM,
-                                                                     e_SS,
-                                                                     e_yyyy2,
-                                                                     e_mm2,
-                                                                     e_dd2,
-                                                                     e_HH2,
-                                                                     e_MM2,
-                                                                     e_SS2))
-    r_obs_interv.place(x=10,y=7)  
-    # Custom interval 
-    r_custom_interv = tk.Radiobutton(frame_dt_interv,text='Custom Interval:',
-                                     variable=dt_interv,value=2,state='disabled',
-                                     command = lambda: custom_interv_radio(e_yyyy,
-                                                                           e_mm,
-                                                                           e_dd,
-                                                                           e_HH,
-                                                                           e_MM,
-                                                                           e_SS,
-                                                                           e_yyyy2,
-                                                                           e_mm2,
-                                                                           e_dd2,
-                                                                           e_HH2,
-                                                                           e_MM2,
-                                                                           e_SS2))
-    r_custom_interv.place(x=10,y=27) 
-    l_example = tk.Label(frame_dt_interv,text='(yyyy-mm-dd HH:MM:SS)')
-    l_example.place(x=50,y=45)
-    l_from = tk.Label(frame_dt_interv,text='From')
-    l_from.place(x=25,y=65)
-    e_yyyy = tk.Entry(frame_dt_interv,width=4,state='disabled')
-    e_yyyy.place(x=65,y=66)
-    l_sep1 = tk.Label(frame_dt_interv,text='-')
-    l_sep1.place(x=93,y=65)
-    e_mm = tk.Entry(frame_dt_interv,width=2,state='disabled')
-    e_mm.place(x=103,y=66)
-    l_sep2 = tk.Label(frame_dt_interv,text='-')
-    l_sep2.place(x=117,y=65)    
-    e_dd = tk.Entry(frame_dt_interv,width=2,state='disabled')
-    e_dd.place(x=127,y=66)    
-    e_HH = tk.Entry(frame_dt_interv,width=2,state='disabled')
-    e_HH.place(x=155,y=66)    
-    l_sep3 = tk.Label(frame_dt_interv,text=':')
-    l_sep3.place(x=169,y=65)  
-    e_MM = tk.Entry(frame_dt_interv,width=2,state='disabled')
-    e_MM.place(x=178,y=66)    
-    l_sep4 = tk.Label(frame_dt_interv,text=':')
-    l_sep4.place(x=192,y=65)      
-    e_SS = tk.Entry(frame_dt_interv,width=2,state='disabled')
-    e_SS.place(x=201,y=66)     
-    l_to = tk.Label(frame_dt_interv,text='To')
-    l_to.place(x=25,y=85)
-    e_yyyy2 = tk.Entry(frame_dt_interv,width=4,state='disabled')
-    e_yyyy2.place(x=65,y=86)
-    l_sep5 = tk.Label(frame_dt_interv,text='-')
-    l_sep5.place(x=93,y=85)
-    e_mm2 = tk.Entry(frame_dt_interv,width=2,state='disabled')
-    e_mm2.place(x=103,y=86)
-    l_sep6 = tk.Label(frame_dt_interv,text='-')
-    l_sep6.place(x=117,y=85)    
-    e_dd2 = tk.Entry(frame_dt_interv,width=2,state='disabled')
-    e_dd2.place(x=127,y=86)    
-    e_HH2 = tk.Entry(frame_dt_interv,width=2,state='disabled')
-    e_HH2.place(x=155,y=86)    
-    l_sep7 = tk.Label(frame_dt_interv,text=':')
-    l_sep7.place(x=169,y=85)  
-    e_MM2 = tk.Entry(frame_dt_interv,width=2,state='disabled')
-    e_MM2.place(x=178,y=86)    
-    l_sep8 = tk.Label(frame_dt_interv,text=':')
-    l_sep8.place(x=192,y=85)      
-    e_SS2 = tk.Entry(frame_dt_interv,width=2,state='disabled')
-    e_SS2.place(x=201,y=86)       
+    frame_residuals.place(x=555,y=5,width=267,height=280)
 
     # Residuals plot frame
     frame_residuals_plot = tk.LabelFrame(frame_residuals, text='Plot options',labelanchor='n',
                                    font=('raleway', 10,'bold'),fg='#1c4366')
-    frame_residuals_plot.place(x=5,y=155,width=254,height=116) 
+    frame_residuals_plot.place(x=5,y=5,width=254,height=116) 
 
     # X-axis Units
     xunits_frame = tk.LabelFrame(frame_residuals_plot,text='Date Units',labelanchor='n',
@@ -2666,11 +2579,18 @@ def residuals_frame():
                                                           r_yunits=r_yunits,
                                                           r_xunits=r_xunits,
                                                           e_o=e_o,
-                                                          dt_interv=dt_interv,
                                                           b_export_residuals=b_export_residuals,
+                                                          b_run_residuals_fft=b_run_residuals_fft,
+                                                          r_hours=r_hours,
+                                                          r_days=r_days,
+                                                          r_hz=r_hz,
+                                                          b_run_residuals=b_run_residuals,
+                                                          save_status=save_status,
+                                                          save_status_fft=save_status_fft,
+                                                          b_export_residuals_fft=b_export_residuals_fft
                                                           ))
     b_run_residuals.configure(anchor="center")
-    b_run_residuals.place(relx=.5, y=295,anchor='center')   
+    b_run_residuals.place(relx=.5, y=145,anchor='center')   
 
     # Button export residuals ASCII
     b_export_residuals = tk.Button(frame_residuals, text='Export ASCII', font=('raleway', 10,'bold'),
@@ -2679,13 +2599,68 @@ def residuals_frame():
                                                          button_export=b_export_residuals,
                                                          save_status=save_status))
     b_export_residuals.configure(anchor="center")
-    b_export_residuals.place(relx=.5, y=338,anchor='center')  
+    b_export_residuals.place(relx=.5, y=185,anchor='center')  
     
     # Save Status
     save_status = tk.Label(frame_residuals, text=' ',wraplength=260,width=36,
                            font=('Rayleway','9',))
     save_status.configure(anchor="center",bg=DEFAULT_BG_COLOR)
-    save_status.place(x=2,y=358) 
+    save_status.place(x=2,y=205) 
+
+    # Main FFT residuals frame
+    frame_residuals_fft = ttk.LabelFrame(frame,text='Residuals FFT',labelanchor='n')
+    frame_residuals_fft.place(x=555,y=300,height=230,width=267)
+    
+    # FFT Scale frame
+    frame_residuals_fft_scale = tk.LabelFrame(frame_residuals_fft,text='X-axis Scale',height=50,width=258,
+                               font=('raleway', 10,'bold'),fg='#1c4366')
+    frame_residuals_fft_scale.place(x=3,y=5)
+    
+    # Scale Options
+    r_scale = tk.IntVar()
+    r_scale.set('1')
+    # Hours 
+    r_hours = tk.Radiobutton(frame_residuals_fft_scale,text='Hours',variable=r_scale,value=1,state='disabled')
+    r_hours.place(x=10,y=2)  
+    # Days
+    r_days = tk.Radiobutton(frame_residuals_fft_scale,text='Days',variable=r_scale,value=2,state='disabled')
+    r_days.place(x=100,y=2)       
+    # Hz
+    r_hz = tk.Radiobutton(frame_residuals_fft_scale,text='Hz',variable=r_scale,value=3,state='disabled')
+    r_hz.place(x=190,y=2)      
+
+    # Button run FFT
+    b_run_residuals_fft = tk.Button(frame_residuals_fft, text='Run FFT & Plot', font=('raleway', 10,'bold'),
+                          fg = 'black',width=6,padx=73,pady=4,borderwidth=4,state='disabled',
+                          command = lambda: run_fft(df_to_export,
+                                                    r_scale,
+                                                    b_export_residuals_fft,
+                                                    save_status_fft,
+                                                    b_run_fft=b_run_residuals_fft))
+    b_run_residuals_fft.configure(anchor="center")
+    b_run_residuals_fft.place(relx=.5, y=77,anchor='center')  
+
+    # Button export FFT
+    b_export_residuals_fft = tk.Button(frame_residuals_fft, text='Export ASCII', font=('raleway', 10,'bold'),
+                          fg = 'black',width=6,padx=73,pady=4,borderwidth=4,state='disabled',
+                          command = lambda: export_ascii(df_to_be_exported=df_fft,
+                                                         button_export=b_export_residuals_fft,
+                                                         save_status=save_status_fft))
+    b_export_residuals_fft.configure(anchor="center")
+    b_export_residuals_fft.place(relx=.5, y=120,anchor='center')  
+    
+    # Save Status
+    save_status_fft = tk.Label(frame_residuals_fft, text=' ',wraplength=260,width=36,
+                           font=('Rayleway','9',))
+    save_status_fft.configure(anchor="center",bg=DEFAULT_BG_COLOR)
+    save_status_fft.place(x=2,y=140) 
+
+    # Help FFT
+    b_help_fft = tk.Button(frame_residuals_fft,text='?',font=('Rayleway','16','bold'),
+                            fg='white',bg='#1c4366',command = help_fft_popup)
+    b_help_fft.place(x=240,y=-7,width=20,height=20) 
+
+
 
 
 
@@ -2737,7 +2712,8 @@ def fft_frame():
                                                       r_days=r_days,
                                                       r_hz=r_hz,
                                                       b_export_fft=b_export_fft,
-                                                      save_status=save_status
+                                                      save_status=save_status,
+                                                      
                                                       ))
     b_upload_fft.configure(anchor="center")
     b_upload_fft.place(relx=.5, y=145,anchor='center')
@@ -2770,7 +2746,11 @@ def fft_frame():
     # Button run FFT
     b_run_fft = tk.Button(frame_fft, text='Run FFT & Plot', font=('raleway', 10,'bold'),
                           fg = 'black',width=6,padx=73,pady=4,borderwidth=4,state='disabled',
-                          command = lambda: run_fft(df,r_scale,b_export_fft,save_status))
+                          command = lambda: run_fft(df,
+                                                    r_scale,
+                                                    b_export_fft,
+                                                    save_status,
+                                                    b_run_fft))
     b_run_fft.configure(anchor="center")
     b_run_fft.place(relx=.5, y=77,anchor='center')    
 

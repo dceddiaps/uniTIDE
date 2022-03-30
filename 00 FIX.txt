@@ -1,0 +1,2 @@
+reamostragem em cubic spline.
+erro ao abrir dado com skiprows=1, ele aceita tudo NaN.
