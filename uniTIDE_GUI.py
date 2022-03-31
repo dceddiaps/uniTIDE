@@ -842,11 +842,17 @@ def upload_file_plot(label_sumario,
                             usecols=(cols_to_use)).iloc[:, np.argsort(cols_to_use)]              
         else:
             pass
-            
+        
         # Converting dates to datetime vector and heights to floats.
         df.date = pd.to_datetime(df.date)
         df.h = df.h.astype("float")
         df.h = np.round(df.h,3)     # Don't need more than 3 decimals. It's tide.
+        
+        # Break try if there is any NaN
+        if df['date'].isnull().sum() != 0:
+            print(1/0)
+        if df['h'].isnull().sum() != 0:
+            print(1/0)
         
         # Upload successful!
         b_upload_plot.config(bg="Light green")
