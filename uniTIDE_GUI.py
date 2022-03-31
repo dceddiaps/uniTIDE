@@ -1006,6 +1006,12 @@ def upload_file_qc(label_sumario,
         df.h = df.h.astype("float")
         df.h = np.round(df.h,3)     # Don't need more than 3 decimals. It's tide.
         
+        # Break try if there is any NaN
+        if df['date'].isnull().sum() != 0:
+            print(1/0)
+        if df['h'].isnull().sum() != 0:
+            print(1/0)
+        
         # Upload successful!
         b_upload_qc.config(bg="Light green")
 
@@ -1225,7 +1231,13 @@ def upload_file_bw(e_fs,
         e_fs['state'] = 'normal'
         e_cutoff['state'] = 'normal'
         e_order['state'] = 'normal'
-        
+
+        # Break try if there is any NaN
+        if df['date'].isnull().sum() != 0:
+            print(1/0)
+        if df['h'].isnull().sum() != 0:
+            print(1/0)
+
         # Upload successful!
         b_upload_bw.config(bg="Light green")
         
@@ -1476,7 +1488,13 @@ def upload_file_resample(label_sumario,
         df.date = pd.to_datetime(df.date)
         df.h = df.h.astype("float")
         df.h = np.round(df.h,3)     # Don't need more than 3 decimals. It's tide.
-        
+
+        # Break try if there is any NaN
+        if df['date'].isnull().sum() != 0:
+            print(1/0)
+        if df['h'].isnull().sum() != 0:
+            print(1/0)
+
         # Upload successful!
         b_upload_resample.config(bg="Light green")
 
@@ -1658,7 +1676,13 @@ def upload_file_residuals(label_sumario,
         df.date = pd.to_datetime(df.date)
         df.h = df.h.astype("float")
         df.h = np.round(df.h,3)     # Don't need more than 3 decimals. It's tide.
-        
+
+        # Break try if there is any NaN
+        if df['date'].isnull().sum() != 0:
+            print(1/0)
+        if df['h'].isnull().sum() != 0:
+            print(1/0)
+
         # Upload successful!
         b_upload_residuals.config(bg="Light green")
 
@@ -1802,8 +1826,8 @@ def run_residuals(df_obs,
 
 
     plt.title(f'$Observed$: {file_obs}\n$Predicted$: {file_pre}',fontweight='bold')
-    plt.xlim(np.mean(y)-1*np.std(y),
-              np.mean(y)+1*np.std(y))
+    plt.xlim(np.mean(y)-3*np.std(y),
+              np.mean(y)+3*np.std(y))
     plt.fill_between(np.ravel(x), np.ravel(y), 0,
                       # facecolor="orange", # The fill color
                       color='blue',       # The outline color
@@ -1923,7 +1947,13 @@ def upload_file_fft(label_sumario,
         df.date = pd.to_datetime(df.date)
         df.h = df.h.astype("float")
         df.h = np.round(df.h,3)     # Don't need more than 3 decimals. It's tide.
-        
+
+        # Break try if there is any NaN
+        if df['date'].isnull().sum() != 0:
+            print(1/0)
+        if df['h'].isnull().sum() != 0:
+            print(1/0)
+
         # Upload successful!
         b_upload_fft.config(bg="Light green")
         
