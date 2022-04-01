@@ -12,7 +12,7 @@ from tkinter import filedialog
 from tkinter import Menu
 import pandas as pd
 import numpy as np
-from scipy import signal,stats
+from scipy import signal,stats,interpolate
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 import datetime as dt
@@ -295,14 +295,21 @@ def help_fft_popup():
 # Resample and save
 def save_file(b_save,save_status,df,r_res,e_res_other):
     
-    import scipy.interpolate
-    
     try:
-        cs = scipy.interpolate.CubicSpline(df.date,df.h, axis=0)
+        cs = interpolate.CubicSpline(df.date,df.h, axis=0)
         
-        if r_res.get() in [1,2,3,4]:
-            # x = np.arange(np.datetime64(df.date.iloc[0]),np.datetime64(df.date.iloc[-1]), dt.timedelta(minutes=1))
-            x = np.arange(df.date.iloc[0],df.date.iloc[-1], dt.timedelta(minutes=r_res.get()))
+        if r_res.get() == 1:
+            df_for_saving = df
+        elif r_res.get() == 2:
+            x = np.arange(df.date.iloc[0],df.date.iloc[-1], dt.timedelta(minutes=1))
+            x = pd.to_datetime(x)
+            df_for_saving = pd.concat([pd.DataFrame(x),pd.DataFrame(cs(x))],axis=1)
+        elif r_res.get() == 3:
+            x = np.arange(df.date.iloc[0],df.date.iloc[-1], dt.timedelta(minutes=5))
+            x = pd.to_datetime(x)
+            df_for_saving = pd.concat([pd.DataFrame(x),pd.DataFrame(cs(x))],axis=1)
+        elif r_res.get() == 4:
+            x = np.arange(df.date.iloc[0],df.date.iloc[-1], dt.timedelta(minutes=int(e_res_other.get())))
             x = pd.to_datetime(x)
             df_for_saving = pd.concat([pd.DataFrame(x),pd.DataFrame(cs(x))],axis=1)
         elif len(e_res_other.get()) == 0:
