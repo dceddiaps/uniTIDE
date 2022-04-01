@@ -16,11 +16,28 @@ from scipy import signal,stats,interpolate
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 import datetime as dt
+from TkinterDnD2 import *
+# pip install tkinterdnd2
+from PIL import ImageTk, Image
 
 DEFAULT_BG_COLOR='#f1f0f1'
 
 #_____________________________________________________________________________#
 #_________________________________GLOBAL DEFS_________________________________#
+
+
+def path_listbox(event):
+    
+    
+    # event.data[1:-1].split('}{')
+    
+    dnd_files.extend(list(event.data[1:-1].split('} {')))
+    if len(list(event.data[1:-1].split('} {'))) > 1:
+        for i in list(event.data[1:-1].split('} {')):
+            lb.insert("end", i)
+    else:
+        lb.insert("end", event.data[1:-1])
+    
 
 
 # Fade Out Effect 
@@ -449,6 +466,54 @@ def inpux_box(frame,box_name,x,y):
     _sum['yscroll'] = vscroll.set
     
     return lframe,e_skip_hrows,e_skip_frows,e_date_col,e_h_col,lframe_delimiter,r,e_other,upload_status,l_stat_hmax_val,l_stat_hmin_val,l_stat_hmean_val,l_stat_startdate_val,l_stat_enddate_val,l_stat_dateinterv_val,l_stat_sf_val,_sum                      
+
+# Layout of input/browse box of MULTIPLE files
+def inpux_box_multiple(frame,box_name,x,y):
+    
+    global new_image
+    
+    lframe = ttk.LabelFrame(frame,text=box_name,labelanchor='n')
+    # lframe = tk.LabelFrame(frame,text='Data Input',font=('raleway', 11,'bold italic'),fg='black')
+    lframe.place(x=x,y=y,height=420,width=400)
+    
+    # List Box with path of inputted files.
+    lb = tk.Listbox(lframe,selectmode=tk.EXTENDED)
+    lb.place(x=3,y=120,width=370,height=160)
+    # Vertical scroll
+    vscroll = tk.Scrollbar(lframe, orient=tk.VERTICAL, command=lb.yview)
+    vscroll.place(in_=lb, relx=1, relheight=1.0, bordermode="inside")
+    lb['yscroll'] = vscroll.set
+    # Horizontal scroll
+    hscroll = tk.Scrollbar(lframe, orient=tk.HORIZONTAL, command=lb.xview)
+    hscroll.place(in_=lb, relx=0, rely=1,relwidth=1, bordermode="inside")
+    lb['xscroll'] = hscroll.set
+    
+    dnd_label = tk.Label(lframe,text="Or...\njust Drag 'n Drop here!",
+                         font=('raleway', 10,'bold'))
+    dnd_label.place(relx=0.5,rely=0.2,anchor='center')
+    
+    
+    # #Create a canvas
+    canvas= tk.Canvas(lframe, width=55, height=60)
+    canvas.place(relx=0.75,rely=0.22,anchor='center')
+    
+    #Load an image in the script
+    img= (Image.open(r"C:\DCPS\GitHub\uniTIDE\arrow-down-icon-png-6711.png"))
+    
+    #Resize the Image using resize method
+    resized_image= img.resize((50,50), Image.ANTIALIAS)
+    new_image= ImageTk.PhotoImage(resized_image)
+    
+    #Add image to the Canvas Items
+    canvas.create_image(10,10, anchor=tk.NW, image=new_image)
+    
+    # original_arrow_img = Image.open(r"C:\DCPS\GitHub\uniTIDE\arrow-down-icon-png-6711.png")
+    # resize = original_arrow_img.resize((100,100), Image.ANTIALIAS)
+    # resized_arrow_img = ImageTk.PhotoImage(resize)
+    # arrow = tk.Label(lframe, image = resized_arrow_img)
+    # arrow.place(relx=0.1,rely=0.1,)
+    
+    return lframe,lb                    
 
 # Layout of plot box.
 def plot_box(frame,x,y):
@@ -930,6 +995,142 @@ def upload_file_plot(label_sumario,
 #______________________________COMPARE TIDES DEFS_____________________________#
 
 
+def get_browse_paths(files,lb):
+    
+    lb.delete(0,tk.END)
+    
+    # Open dialog and display path in label
+    filenames = filedialog.askopenfilenames(title='Choose a file')
+    files.append(filenames)
+    # files = [item for t in filenames for item in t]
+
+    try:
+        for i in range(len(dnd_files)):
+            lb.insert(lb.size()+i, dnd_files[i])
+    except: 
+        pass
+    count=0
+    for i in [item for t in files for item in t]:
+        lb.insert(lb.size()+count, i)
+        count+=1
+
+        
+    
+
+def upload_multiple_file_comp(label_sumario,
+                     date_col,
+                     h_col,
+                     skipr,
+                     skipf,
+                     sep,
+                     other_sep,
+                     # b_upload_multiple,
+                     # b_plot_multiple,
+                     # r_julian,
+                     # r_dt,
+                     # r_m,
+                     # r_f,
+                     # r_o,
+                     # e_o,
+):
+
+    global df,file
+    
+    # Open dialog and display path in label
+    file = filedialog.askopenfilenames(title='Choose a file')
+
+    
+    # Delete any data preview information
+    label_sumario.delete('0.0',tk.END)
+    
+    # Deleting old dataframe, if it exists.
+    if 'df' in globals():
+        del df
+    
+    # Tring to load data.
+    try:
+        # Defining separators/delimiters of *.txt
+        if sep==1:
+            sep=None
+        else:
+            sep=other_sep.get()
+            
+        # Load data
+        cols_to_use = [int(date_col.get()),int(h_col.get())]
+        
+        
+        df=pd.read_csv(file,engine='python',names=['date','h'],
+                        skiprows= int(skipr.get()),
+                        skipfooter= int(skipf.get()),
+                        sep=sep,
+                        usecols=(cols_to_use)).iloc[:, np.argsort(cols_to_use)]
+    
+        # Succed when delimiter is '\s{2,}' (two or more whitespaces).
+        # This problem is expressed as heighs being times (00:00:00).
+        if ':' in str(df.h[0]):
+            df=pd.read_csv(file,engine='python',names=['date','h'],
+                            skiprows= int(skipr.get()),
+                            skipfooter= int(skipf.get()),
+                            sep='\s{2,}',
+                            usecols=(cols_to_use)).iloc[:, np.argsort(cols_to_use)]              
+        else:
+            pass
+        
+        # Converting dates to datetime vector and heights to floats.
+        df.date = pd.to_datetime(df.date)
+        df.h = df.h.astype("float")
+        df.h = np.round(df.h,3)     # Don't need more than 3 decimals. It's tide.
+        
+        # Break try if there is any NaN
+        if df['date'].isnull().sum() != 0:
+            print(1/0)
+        if df['h'].isnull().sum() != 0:
+            print(1/0)
+        
+        # # Upload successful!
+        # b_plot_multiple['state']='normal'
+        # r_julian['state']='normal'
+        # r_dt['state']='normal'
+        # r_m['state']='normal'
+        # r_f['state']='normal'
+        # r_o['state']='normal'
+        # e_o['state']='normal'
+
+        # Fill data preview
+        label_sumario.delete('0.0',tk.END)
+        label_sumario.insert(tk.INSERT,f'''----------------------------------------------------------
+                                Preview:               
+----------------------------------------------------------               
+    {df}''')
+
+
+    except:
+               
+        # Clear data preview
+        label_sumario.delete('0.0',tk.END)
+        
+        # If used closes browser window without selecting any file, it will return to first condition: '<No file selected>'
+        if len(file)==0:
+            label_sumario.insert(tk.INSERT,'<Your data will appear here!>')
+        # If data was loaded, but not as expected, raise error.
+        else:
+            tk.messagebox.showinfo('Input error','''Invalid input.\n\nCheck list:
+> Is my file correct?
+> Are there headers on my file?
+> Are there footers on my file?
+> Is the date column index correct?
+> Is the height column index correct?
+> Is the deliminter correct?''')
+            label_sumario.insert(tk.INSERT,'Invalid input.\n')  
+            if 'df' in globals():
+                
+                label_sumario.insert(tk.INSERT,f'''----------------------------------------------------------
+                                Preview:               
+----------------------------------------------------------
+
+{df}''')    
+
+    return None
 
 
 #_____________________________________________________________________________#
@@ -2127,11 +2328,9 @@ def plot_frame():
 
 def compare_frame():
 
-    global df
+    global df,files,lb,dnd_files
+    
     DEFAULT_BG_COLOR='#f1f0f1'
-
-    # Resize master window
-    # master.geometry("566x633")
 
     # Defining window style
     try:
@@ -2141,9 +2340,29 @@ def compare_frame():
 
     # Creating base frame
     title = 'Compare Tides'
-    frame = base_layer(DEFAULT_BG_COLOR,title,master,frame_responsive_width=551)
+    frame = base_layer(DEFAULT_BG_COLOR,title,master,frame_responsive_width=405)
 
+    x = 5
+    y = 5
+    box_name = 'Multiple Data Input'
+    lframe,lb =inpux_box_multiple(frame,box_name,x,y)
 
+    # Botão upload
+    files = []
+    b_get_browse_paths = tk.Button(lframe, text='Browse Multiple', font=('raleway', 10,'bold'),
+                          fg = 'black',borderwidth=4,width=6,padx=73,pady=4,bg=DEFAULT_BG_COLOR,
+                          command = lambda:get_browse_paths(files,lb))
+    b_get_browse_paths.configure(anchor="center")
+    b_get_browse_paths.place(relx=.5, y=30,anchor='center')
+    
+    # DnD
+    dnd_files = []
+    lb.drop_target_register(DND_FILES)
+    lb.dnd_bind('<<Drop>>', path_listbox)
+    
+
+    
+    
 
 def qc_frame():
 
@@ -2703,8 +2922,6 @@ def residuals_frame():
 
 
 
-
-
 def fft_frame():
 
     global df
@@ -2895,7 +3112,7 @@ def openwf_frame():
 
 
 # Creating main window (root)
-master = tk.Tk()
+master = TkinterDnD.Tk()
 master.title('uniTIDE')
 # master.geometry("566x633")
 master.geometry("843x633")
