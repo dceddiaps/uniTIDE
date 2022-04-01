@@ -39,7 +39,6 @@ def path_listbox(event):
         lb.insert("end", event.data[1:-1])
     
 
-
 # Fade Out Effect 
 def fade_out(root):
     alpha = root.attributes("-alpha")
@@ -470,7 +469,7 @@ def inpux_box(frame,box_name,x,y):
 # Layout of input/browse box of MULTIPLE files
 def inpux_box_multiple(frame,box_name,x,y):
     
-    global new_image
+    global arrow_image
     
     lframe = ttk.LabelFrame(frame,text=box_name,labelanchor='n')
     # lframe = tk.LabelFrame(frame,text='Data Input',font=('raleway', 11,'bold italic'),fg='black')
@@ -488,12 +487,12 @@ def inpux_box_multiple(frame,box_name,x,y):
     hscroll.place(in_=lb, relx=0, rely=1,relwidth=1, bordermode="inside")
     lb['xscroll'] = hscroll.set
     
+    # DnD label and arrow
     dnd_label = tk.Label(lframe,text="Or...\njust Drag 'n Drop here!",
                          font=('raleway', 10,'bold'))
     dnd_label.place(relx=0.5,rely=0.2,anchor='center')
     
-    
-    # #Create a canvas
+    # Create a canvas
     canvas= tk.Canvas(lframe, width=55, height=60)
     canvas.place(relx=0.75,rely=0.22,anchor='center')
     
@@ -502,10 +501,10 @@ def inpux_box_multiple(frame,box_name,x,y):
     
     #Resize the Image using resize method
     resized_image= img.resize((50,50), Image.ANTIALIAS)
-    new_image= ImageTk.PhotoImage(resized_image)
+    arrow_image= ImageTk.PhotoImage(resized_image)
     
     #Add image to the Canvas Items
-    canvas.create_image(10,10, anchor=tk.NW, image=new_image)
+    canvas.create_image(10,10, anchor=tk.NW, image=arrow_image)
     
     # original_arrow_img = Image.open(r"C:\DCPS\GitHub\uniTIDE\arrow-down-icon-png-6711.png")
     # resize = original_arrow_img.resize((100,100), Image.ANTIALIAS)
