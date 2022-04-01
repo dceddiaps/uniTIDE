@@ -292,24 +292,22 @@ def help_save_popup():
 def help_fft_popup():
     return None
 
-# Just save
+# Resample and save
 def save_file(b_save,save_status,df,r_res,e_res_other):
     
+    import scipy.interpolate
+    
     try:
+        cs = scipy.interpolate.CubicSpline(df.date,df.h, axis=0)
         
-        # Resample
-        if r_res.get() == 1:       
-            df_for_saving = df
-        elif r_res.get() == 2:       
-            df_for_saving = df.set_index('date').resample('1T').ffill().reset_index().dropna()
-        elif r_res.get() == 3:
-            df_for_saving = df.set_index('date').resample('5T').ffill().reset_index().dropna()
-        elif (r_res.get() == 4) & (len(e_res_other.get())>=1):
-            df_for_saving = df.set_index('date').resample(e_res_other.get()+'T').ffill().reset_index().dropna()
-        elif len(e_res_other.get())==0:
+        if r_res.get() in [1,2,3,4]:
+            # x = np.arange(np.datetime64(df.date.iloc[0]),np.datetime64(df.date.iloc[-1]), dt.timedelta(minutes=1))
+            x = np.arange(df.date.iloc[0],df.date.iloc[-1], dt.timedelta(minutes=r_res.get()))
+            x = pd.to_datetime(x)
+            df_for_saving = pd.concat([pd.DataFrame(x),pd.DataFrame(cs(x))],axis=1)
+        elif len(e_res_other.get()) == 0:
             tk.messagebox.showinfo('WARNING','You need to define the sample interval!')
-
-        
+    
         # Saving
         
         # Exiting try in a rude way xD
