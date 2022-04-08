@@ -3,8 +3,7 @@ análise de concordâncias (dif fase/h)
 
 determinar tipo de mare (diurna/semi/mista)
 
-reamostragem em cubic spline.
-
+diminuir tamanho da letra do diretorio no plot
 
 
 PERGUNTAS:
@@ -13,3 +12,5 @@ Pra que saber se é bissexto? tem 1 script disso
 Pra que precisa converter de yyyy/mm/dd para dia juliano?
 discutir QC: o que é stability test? out of range/outliers podem ser resolvidos com std.
 Como é anáilise de concordâncias em inglês?
+
+

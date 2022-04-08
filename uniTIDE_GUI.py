@@ -25,19 +25,7 @@ DEFAULT_BG_COLOR='#f1f0f1'
 #_____________________________________________________________________________#
 #_________________________________GLOBAL DEFS_________________________________#
 
-
-def path_listbox(event):
-    
-    
-    # event.data[1:-1].split('}{')
-    
-    dnd_files.extend(list(event.data[1:-1].split('} {')))
-    if len(list(event.data[1:-1].split('} {'))) > 1:
-        for i in list(event.data[1:-1].split('} {')):
-            lb.insert("end", i)
-    else:
-        lb.insert("end", event.data[1:-1])
-    
+  
 
 # Fade Out Effect 
 def fade_out(root):
@@ -489,7 +477,7 @@ def inpux_box_multiple(frame,box_name,x,y):
     
     # DnD label and arrow
     dnd_label = tk.Label(lframe,text="Or...\njust Drag 'n Drop here!",
-                         font=('raleway', 10,'bold'))
+                         font=('raleway', 10,'bold italic'))
     dnd_label.place(relx=0.5,rely=0.2,anchor='center')
     
     # Create a canvas
@@ -505,12 +493,7 @@ def inpux_box_multiple(frame,box_name,x,y):
     
     #Add image to the Canvas Items
     canvas.create_image(10,10, anchor=tk.NW, image=arrow_image)
-    
-    # original_arrow_img = Image.open(r"C:\DCPS\GitHub\uniTIDE\arrow-down-icon-png-6711.png")
-    # resize = original_arrow_img.resize((100,100), Image.ANTIALIAS)
-    # resized_arrow_img = ImageTk.PhotoImage(resize)
-    # arrow = tk.Label(lframe, image = resized_arrow_img)
-    # arrow.place(relx=0.1,rely=0.1,)
+
     
     return lframe,lb                    
 
@@ -994,6 +977,16 @@ def upload_file_plot(label_sumario,
 #______________________________COMPARE TIDES DEFS_____________________________#
 
 
+def path_listbox(event):
+    
+    dnd_files.extend(list(event.data[1:-1].split('} {')))
+    if len(list(event.data[1:-1].split('} {'))) > 1:
+        for i in list(event.data[1:-1].split('} {')):
+            lb.insert("end", i)
+    else:
+        lb.insert("end", event.data[1:-1])
+
+
 def get_browse_paths(files,lb):
     
     lb.delete(0,tk.END)
@@ -1013,8 +1006,7 @@ def get_browse_paths(files,lb):
         lb.insert(lb.size()+count, i)
         count+=1
 
-        
-    
+
 
 def upload_multiple_file_comp(label_sumario,
                      date_col,
@@ -2016,33 +2008,38 @@ def run_residuals(df_obs,
     plt.tight_layout()
     plt.show()
     
-        
+    # Creating df for export
+    df_to_export = pd.concat([resample_obs.date,df_residuals.h],axis=1)
+
     # Plot residual frequency (KDE)
     plt.figure('uniTIDE - Residuals distribution')
 
     x,y = np.split(df_residuals.h.plot.kde().get_children()[0].get_path().vertices,2,1)
 
-    text = f"Mean = {np.round(np.mean(y),3)} {units}\nMedian = {np.round(np.median(y),3)} {units}\nMode = {np.round(x[y.argmax()][0],3)} {units}\nStd = {np.round(np.std(y),3)} {units}"
+    mean   = np.round(df_to_export.h.mean(),3)
+    median = np.round(df_to_export.h.median(),3)
+    mode   = np.round(stats.mode(df_to_export.h)[0][0],3)
+    std    = np.round(df_to_export.h.std(),3)
+    
+    text = f"Mean = {mean} {units}\nMedian = {median} {units}\nMode = {mode} {units}\nStd = {std} {units}"
     plt.text(0.65,
          0.75,
          text,
          transform=plt.gca().transAxes,
          bbox=dict(facecolor='blue',alpha=0.15,edgecolor='black',boxstyle='round'))
 
+    # df_residuals.h.plot.kde()
+    df_residuals.h.plot.hist(bins=30,secondary_y=True,alpha=0.5)
 
     plt.title(f'$Observed$: {file_obs}\n$Predicted$: {file_pre}',fontweight='bold')
-    plt.xlim(np.mean(y)-3*np.std(y),
-              np.mean(y)+3*np.std(y))
-    plt.fill_between(np.ravel(x), np.ravel(y), 0,
-                      # facecolor="orange", # The fill color
-                      color='blue',       # The outline color
-                      alpha=0.2)  
+    plt.xlim(mean-3*std,mean+3*std)
+    # plt.fill_between(np.ravel(x), np.ravel(y), 0,
+    #                   # facecolor="orange", # The fill color
+    #                   color='blue',       # The outline color
+    #                   alpha=0.2)  
     plt.ylabel('Density (KDE)',fontweight="bold")
     plt.xlabel(f'Residual $(Observed - Predicted)$ ({units})',fontweight="bold")
     plt.show()
-
-    # Creating df for export
-    df_to_export = pd.concat([resample_obs.date,df_residuals.h],axis=1)
 
     # Enabling buttons   
     b_export_residuals['state'] = 'normal'
@@ -2361,8 +2358,6 @@ def compare_frame():
     
 
     
-    
-
 def qc_frame():
 
     global df
