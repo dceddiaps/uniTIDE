@@ -27,15 +27,15 @@ DEFAULT_BG_COLOR='#f1f0f1'
 
   
 
-# Fade Out Effect 
-def fade_out(root):
-    alpha = root.attributes("-alpha")
-    if alpha > 0:
-        alpha -= .1
-        root.attributes("-alpha", alpha)
-        root.after(100, lambda: fade_out(root))
-    else:
-        root.destroy()
+# # Fade Out Effect 
+# def fade_out(root):
+#     alpha = root.attributes("-alpha")
+#     if alpha > 0:
+#         alpha -= .1
+#         root.attributes("-alpha", alpha)
+#         root.after(100, lambda: fade_out(root))
+#     else:
+#         root.destroy()
         
 # Defining style for all main boxes
 def call_style():
@@ -99,7 +99,9 @@ def the_welcome(root):
     l_subtitle = tk.Label(frame,text='Designed for field and office needs.',
                           bg='#1c4366',fg='white',font=('raleway','9','italic'))
     l_subtitle.place(relx=.57, rely=.57,anchor='center')
-    
+    l_version = tk.Label(frame,text='v0.1 Beta',
+                          bg='#1c4366',fg='white',font=('raleway',12,'italic'))
+    l_version.place(relx=.65, rely=.43,anchor='center')
     l_author = tk.Label(frame,text='@author: Diogo Silva <dceddiaps@protonmail.com>',
                         bg='#1c4366',fg='white')
     l_author.place(relx=.5, rely=.9,anchor='s')
@@ -319,6 +321,7 @@ def save_file(b_save,save_status,df,r_res,e_res_other):
         elif len(e_res_other.get()) == 0:
             tk.messagebox.showinfo('WARNING','You need to define the sample interval!')
     
+        #df_for_saving = df
         # Saving
         
         # Exiting try in a rude way xD
@@ -685,7 +688,7 @@ def plot_plot(file,
         plt.xlabel(date_unit,fontweight="bold")
         
     if bw==True:
-        plt.plot(filtered_bw.date,filtered_bw[0],label='BW Filtered')
+        plt.plot(filtered_bw.date,filtered_bw.h,label='BW Filtered')
     
     plt.ylabel(f'Tide height ({units})',fontweight="bold")
     plt.legend(facecolor='white',framealpha=0.6,frameon=True,borderpad=1, edgecolor="black")
@@ -941,7 +944,7 @@ def upload_file_plot(label_sumario,
         l_stat_startdate_val['text']=df.date.min()
         l_stat_enddate_val['text']=df.date.max()
         l_stat_dateinterv_val['text']=df.date.max()-df.date.min()
-        l_stat_sf_val['text']=f'{np.round(((df.date.max()-df.date.min())/len(df)).total_seconds()/60,1)} minute(s)'
+        l_stat_sf_val['text']=f"{stats.mode(df.date[1:].reset_index(drop=True) - df.date[0:-1].reset_index(drop=True))[0][0].astype('timedelta64[m]').astype(float)} minute(s)"
 
     except:
                
@@ -1226,7 +1229,7 @@ def upload_file_qc(label_sumario,
         l_stat_startdate_val['text']=df.date.max()
         l_stat_enddate_val['text']=df.date.min()
         l_stat_dateinterv_val['text']=df.date.max()-df.date.min()
-        l_stat_sf_val['text']=f'{np.round(((df.date.max()-df.date.min())/len(df)).total_seconds()/60,1)} minute(s)'
+        l_stat_sf_val['text']=f"{stats.mode(df.date[1:].reset_index(drop=True) - df.date[0:-1].reset_index(drop=True))[0][0].astype('timedelta64[m]').astype(float)} minute(s)"
 
     except:
                
@@ -1333,7 +1336,7 @@ def upload_file_bw(e_fs,
     """
     
     global df,file
-    
+
     # Open dialog and display path in label
     file = filedialog.askopenfilename(filetypes=[('All',"*.*")])
     upload_status.config(text=file)
@@ -1439,7 +1442,7 @@ def upload_file_bw(e_fs,
         b_upload_bw.config(bg="Light green")
         
         # Fill sample frequency entry of bw filter
-        e_fs.insert(0,np.round(((df.date.max()-df.date.min())/len(df)).total_seconds(),3))
+        e_fs.insert(0,stats.mode(df.date[1:].reset_index(drop=True) - df.date[0:-1].reset_index(drop=True))[0][0].astype('timedelta64[s]').astype(float))
         # Fill cut-off frequency suggestion
         e_cutoff.insert(0,np.round(((df.date.max()-df.date.min())/len(df)).total_seconds()/60))
         # Fill filter order suggestion
@@ -1459,7 +1462,7 @@ def upload_file_bw(e_fs,
         l_stat_startdate_val['text']=df.date.min()
         l_stat_enddate_val['text']=df.date.max()
         l_stat_dateinterv_val['text']=df.date.max()-df.date.min()
-        l_stat_sf_val['text']=f'{np.round(((df.date.max()-df.date.min())/len(df)).total_seconds()/60,1)} minute(s)'
+        l_stat_sf_val['text']=f"{stats.mode(df.date[1:].reset_index(drop=True) - df.date[0:-1].reset_index(drop=True))[0][0].astype('timedelta64[m]').astype(float)} minute(s)"
 
 
     except:
@@ -1561,6 +1564,7 @@ def run_bw(df,
             b_save.config(bg=DEFAULT_BG_COLOR)
             save_status['text'] = ""
             filtered_bw=pd.concat((df.date,pd.DataFrame(filtered_bw)),axis=1)
+            filtered_bw.columns = ['date','h']
             
             # Filter applied! enable all plot/save options!
             e_msl_o['state'] = 'normal'
@@ -1709,8 +1713,8 @@ def upload_file_resample(label_sumario,
         l_stat_startdate_val['text']=df.date.min()
         l_stat_enddate_val['text']=df.date.max()
         l_stat_dateinterv_val['text']=df.date.max()-df.date.min()
-        l_stat_sf_val['text']=f'{np.round(((df.date.max()-df.date.min())/len(df)).total_seconds()/60,1)} minute(s)'
-        
+        l_stat_sf_val['text']=f"{stats.mode(df.date[1:].reset_index(drop=True) - df.date[0:-1].reset_index(drop=True))[0][0].astype('timedelta64[m]').astype(float)} minute(s)"
+   
         # Enabling save buttons!
         r_res_none['state'] = 'normal'
         r_res_1m['state'] = 'normal'
@@ -1897,8 +1901,8 @@ def upload_file_residuals(label_sumario,
         l_stat_startdate_val['text']=df.date.min()
         l_stat_enddate_val['text']=df.date.max()
         l_stat_dateinterv_val['text']=df.date.max()-df.date.min()
-        l_stat_sf_val['text']=f'{np.round(((df.date.max()-df.date.min())/len(df)).total_seconds()/60,1)} minute(s)'
-        
+        l_stat_sf_val['text']=f"{stats.mode(df.date[1:].reset_index(drop=True) - df.date[0:-1].reset_index(drop=True))[0][0].astype('timedelta64[m]').astype(float)} minute(s)"
+   
         # Separating observed and predicted df's.
         if (obs==True) & (pre==False):
             df_obs = df
@@ -1971,10 +1975,28 @@ def run_residuals(df_obs,
     b_export_residuals_fft.config(bg=DEFAULT_BG_COLOR)
     b_export_residuals_fft['state']='disabled'
     
-    resample_obs = df_obs.set_index('date').resample('1T').ffill().reset_index().dropna()
-    resample_pre = df_pre.set_index('date').resample('1T').ffill().reset_index().dropna()
+    import scipy.interpolate
+    import datetime
+    cs_obs = scipy.interpolate.CubicSpline(df_obs.date,df_obs.h, axis=0)
+    x_obs  = np.arange(df_obs.date[0],df_obs.date[len(df_obs)-1], datetime.timedelta(minutes=1))
+    x_obs  = pd.DataFrame(pd.to_datetime(x_obs))
+    y_obs  = pd.DataFrame(cs_obs(x_obs))
+    resample_obs = pd.concat([x_obs,y_obs],axis=1)
+    resample_obs.columns = ['date', 'h']
+    cs_pre = scipy.interpolate.CubicSpline(df_pre.date,df_pre.h, axis=0)
+    x_pre  = np.arange(df_pre.date[0],df_pre.date[len(df_pre)-1], datetime.timedelta(minutes=1))
+    x_pre  = pd.DataFrame(pd.to_datetime(x_pre))
+    y_pre  = pd.DataFrame(cs_pre(x_pre))
+    resample_pre = pd.concat([x_pre,y_pre],axis=1)
+    resample_pre.columns = ['date', 'h']
+    
     df_residuals = (resample_obs-resample_pre).dropna()
     df_residuals.h = np.round(df_residuals.h,3)
+    
+    # resample_obs = df_obs.set_index('date').resample('1T').ffill().reset_index().dropna()
+    # resample_pre = df_pre.set_index('date').resample('1T').ffill().reset_index().dropna()
+    # df_residuals = (resample_obs-resample_pre).dropna()
+    # df_residuals.h = np.round(df_residuals.h,3)
     
     # Defining Y-axis units
     if r_yunits.get() == 1:
@@ -2022,23 +2044,26 @@ def run_residuals(df_obs,
     std    = np.round(df_to_export.h.std(),3)
     
     text = f"Mean = {mean} {units}\nMedian = {median} {units}\nMode = {mode} {units}\nStd = {std} {units}"
-    plt.text(0.65,
-         0.75,
+    plt.text(0.02,
+         .85,
          text,
          transform=plt.gca().transAxes,
-         bbox=dict(facecolor='blue',alpha=0.15,edgecolor='black',boxstyle='round'))
+         bbox=dict(facecolor='white',edgecolor='black',boxstyle='round'))
+    plt.ylim(bottom=0)
+    plt.xlabel(f'Residual $(Observed - Predicted)$ ({units})',fontweight="bold")
 
     # df_residuals.h.plot.kde()
-    df_residuals.h.plot.hist(bins=30,secondary_y=True,alpha=0.5)
+    df_residuals.h.plot.hist(bins=10,secondary_y=True,alpha=0.3,rwidth=0.9,color='blue')
 
     plt.title(f'$Observed$: {file_obs}\n$Predicted$: {file_pre}',fontweight='bold')
-    plt.xlim(mean-3*std,mean+3*std)
+    # plt.xlim(mean-3*std,mean+3*std)
     # plt.fill_between(np.ravel(x), np.ravel(y), 0,
     #                   # facecolor="orange", # The fill color
     #                   color='blue',       # The outline color
     #                   alpha=0.2)  
-    plt.ylabel('Density (KDE)',fontweight="bold")
-    plt.xlabel(f'Residual $(Observed - Predicted)$ ({units})',fontweight="bold")
+    plt.ylabel('Density (KDE)')
+    plt.grid(alpha=0.5)
+    plt.tight_layout()
     plt.show()
 
     # Enabling buttons   
@@ -2173,7 +2198,7 @@ def upload_file_fft(label_sumario,
         l_stat_startdate_val['text']=df.date.min()
         l_stat_enddate_val['text']=df.date.max()
         l_stat_dateinterv_val['text']=df.date.max()-df.date.min()
-        l_stat_sf_val['text']=f'{np.round(((df.date.max()-df.date.min())/len(df)).total_seconds()/60,1)} minute(s)'
+        l_stat_sf_val['text']=f"{stats.mode(df.date[1:].reset_index(drop=True) - df.date[0:-1].reset_index(drop=True))[0][0].astype('timedelta64[m]').astype(float)} minute(s)"
 
         # Load successful! Enable all FFT buttons!
         b_run_fft['state'] = 'normal'
