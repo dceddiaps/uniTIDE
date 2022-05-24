@@ -645,7 +645,7 @@ def plot_plot(file,
         plt.xlabel(date_unit,fontweight="bold")
         
     if bw==True:
-        plt.plot(filtered_bw.date,filtered_bw[0],label='BW Filtered')
+        plt.plot(filtered_bw.date,filtered_bw.h,label='BW Filtered')
     
     plt.ylabel(f'Tide height ({units})',fontweight="bold")
     plt.legend(facecolor='white',framealpha=0.6,frameon=True,borderpad=1, edgecolor="black")
