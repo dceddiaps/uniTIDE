@@ -2725,6 +2725,11 @@ master.geometry("843x633")
 master.configure(bg='#1c4366')
 # Making unable to resize in Y axis!
 master.resizable(True, 0)
+# Icon
+try:
+    master.iconbitmap(r"C:\DCPS\GitHub\uniTIDE\dark-blue-png.ico")
+except:
+    pass
 
 # Doing the proper Welcome!
 the_welcome(master)
